@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Uchinchi tomon fayllari (three.js Draco dekoderi)
+    "public/draco/**",
   ]),
 ]);
 

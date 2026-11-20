@@ -1,36 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DRENIX — korporativ veb-sayt
 
-## Getting Started
+Next.js 16 (App Router, Cache Components), Tailwind CSS v4, Motion, Lenis va Three.js asosidagi ko‘p sahifali sayt.
 
-First, run the development server:
+## Ishga tushirish
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm run build && npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Sahifalar
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Yo‘l | Tavsif |
+|---|---|
+| `/` | Bosh sahifa: 3D feniks-zarrachalar hero, manifest, xizmatlar, jarayon, raqamlar, Launchpad, loyihalar, fikrlar |
+| `/xizmatlar` | Barcha 10 ta xizmat |
+| `/xizmatlar/[slug]` | Har bir xizmat sahifasi (statik generatsiya) |
+| `/startaplar` | DRENIX Launchpad dasturi |
+| `/loyihalar` | Keyslar |
+| `/biz-haqimizda` | Kompaniya haqida |
+| `/aloqa` | Ariza formasi (`?xizmat=<slug>` bilan oldindan tanlash) |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Kontentni tahrirlash
 
-## Learn More
+- `src/lib/site.ts` — telefon, email, manzil, ijtimoiy tarmoqlar (**hozir namunaviy qiymatlar**).
+- `src/lib/data.ts` — xizmatlar, jarayon, raqamlar, loyihalar va mijoz fikrlari (**loyihalar, raqamlar va fikrlar — demo, haqiqiylari bilan almashtiring**).
 
-To learn more about Next.js, take a look at the following resources:
+## Aloqa formasi → Telegram
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`.env.example` dan `.env.local` yarating va to‘ldiring:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+TELEGRAM_BOT_TOKEN=...
+TELEGRAM_CHAT_ID=...
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Sozlanmagan bo‘lsa, arizalar server logiga yoziladi.

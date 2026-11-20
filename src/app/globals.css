@@ -1,26 +1,168 @@
 @import "tailwindcss";
+@import "lenis/dist/lenis.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  /* AURUM uslubidagi yorug‘, "tosh va qog‘oz" palitrasi + logodagi to‘q sariq aksent */
+  --color-stone: #efede8;
+  --color-stone-2: #e5e1da;
+  --color-paper: #f7f6f3;
+  --color-graphite: #141414;
+  --color-graphite-2: #1d1c1b;
+  --color-smoke: #6d6862;
+  --color-hair: rgb(20 20 20 / 0.12);
+  --color-ember: #ec6a26;
+  --color-ember-light: #f39a4a;
+  --color-ember-deep: #d23a14;
+
+  /* Eski tokenlar — ichki komponentlar uchun */
+  --color-ink: #121110;
+  --color-ink-2: #1a1817;
+  --color-ink-3: #24211f;
+  --color-line: rgb(255 255 255 / 0.12);
+  --color-bone: #f3f0ea;
+  --color-bone-2: #e5e1da;
+  --color-umber: #141414;
+  --color-mute: #6d6862;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-michroma), var(--font-inter), sans-serif;
+  --font-mono: var(--font-michroma), ui-monospace, monospace;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-stone);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-stone);
+  color: var(--color-graphite);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--color-ember);
+  color: #fff;
+}
+
+/* Keng geometrik sarlavhalar (AURUM: "RISE ABOVE THE PARK") */
+.wide,
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  text-transform: uppercase;
+  line-height: 1.02;
+  letter-spacing: 0.01em;
+}
+
+/* Mayda, keng harf oralig‘idagi yorliqlar */
+.label {
+  font-family: var(--font-display);
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.container-x {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 1480px;
+  padding-inline: 20px;
+}
+
+@media (min-width: 768px) {
+  .container-x {
+    padding-inline: 44px;
+  }
+}
+
+/* AURUM paneli: qorong‘i shisha */
+.panel-dark {
+  background: rgb(14 14 16 / 0.62);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+}
+
+/* AURUM interyer kartasi: oq shisha */
+.panel-light {
+  background: rgb(250 249 247 / 0.86);
+  border: 1px solid rgb(255 255 255 / 0.7);
+  box-shadow: 0 24px 60px -24px rgb(20 20 20 / 0.35);
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+
+/* Eski nomlar — mos ravishda */
+.glass,
+.glass-warm {
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 30px 70px -30px rgb(0 0 0 / 0.5);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+@keyframes kenburns {
+  from { transform: scale(1.02); }
+  to { transform: scale(1.1); }
+}
+.kenburns {
+  animation: kenburns 26s ease-out both alternate infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Scrollbar yashirilgan — sahifa baribir aylanadi (Lenis + g‘ildirak/sensor) */
+html,
+body {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Device tiers (set on <html> by SmoothScroll): lighter glass and no endless zoom on weaker hardware */
+[data-tier="mid"] .panel-dark,
+[data-tier="mid"] .panel-light {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+[data-tier="low"] .panel-dark {
+  background: rgb(14 14 16 / 0.86);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-tier="low"] .panel-light {
+  background: rgb(250 249 247 / 0.96);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+[data-tier="low"] .kenburns {
+  animation: none;
 }
