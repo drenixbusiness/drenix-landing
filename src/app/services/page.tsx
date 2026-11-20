@@ -42,7 +42,7 @@ export default function ServicesPage() {
                   <span className="label text-ember">{s.no}</span>
                   <h2 className="wide mt-3 text-[4.6vw] transition-colors group-hover:text-ember sm:text-[3.6vw] md:text-[2.2vw] lg:text-[2vw] 2xl:text-[30px]">{s.title}</h2>
                   <p className="mt-4 max-w-md text-lg text-graphite/65">{s.summary}</p>
-                  <p className="mt-6 text-sm text-graphite/45">{s.timeline}</p>
+                  <p className="mt-6 text-sm text-graphite/65">{s.timeline}</p>
                   <span className="mt-6 inline-flex items-center gap-2 font-medium">
                     <span className="border-b border-graphite/30 pb-0.5 group-hover:border-graphite">Details</span>
                     <span className="transition-transform group-hover:translate-x-1">→</span>

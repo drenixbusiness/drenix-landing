@@ -35,6 +35,20 @@ export function Lines({
   immediate?: boolean;
 }) {
   const lines = text.split("|");
+  // Above-the-fold titles animate in pure CSS: visible on first paint, no wait for hydration
+  if (immediate) {
+    return (
+      <Tag className={className} aria-label={lines.join(" ")}>
+        <span className="block" aria-hidden>
+          {lines.map((line, i) => (
+            <span key={i} className="block overflow-hidden pb-[0.06em]">
+              <span className="hero-rise block" style={{ animationDelay: `${delay + i * 0.08}s` }}>{line}</span>
+            </span>
+          ))}
+        </span>
+      </Tag>
+    );
+  }
   const trigger = immediate
     ? { animate: "show" as const }
     : { whileInView: "show" as const, viewport: { once: true, margin: "-8% 0px" } };

@@ -35,14 +35,14 @@ function Window({ title, children, light = false, url }: { title: string; childr
   );
 }
 
-const muted = "text-[#efe7dd]/45";
+const muted = "text-[#efe7dd]/65";
 
 /* 01 — Dasturlash: kod muharriri */
 function CodeMock() {
   const files = [
     ["app", 0, true], ["layout.tsx", 1], ["page.tsx", 1, false, true], ["checkout", 1, true], ["components", 0, true], ["Cart.tsx", 1], ["Payment.tsx", 1], ["lib", 0, true], ["payme.ts", 1],
   ] as const;
-  const k = "text-[#f39a4a]", s = "text-[#9ccf8a]", f = "text-[#7fb6ff]", c = "text-white/30";
+  const k = "text-[#f39a4a]", s = "text-[#9ccf8a]", f = "text-[#7fb6ff]", c = "text-white/55";
   const code: ReactNode[] = [
     <><span className={k}>import</span> {"{ Cart }"} <span className={k}>from</span> <span className={s}>&quot;@/components/Cart&quot;</span>;</>,
     <><span className={k}>import</span> {"{ createPayment }"} <span className={k}>from</span> <span className={s}>&quot;@/lib/payme&quot;</span>;</>,
@@ -65,7 +65,7 @@ function CodeMock() {
           <p className={`mb-2 ${muted}`}>PROJECT</p>
           {files.map(([name, depth, folder, active]) => (
             <div key={name} className={`flex items-center gap-1.5 rounded px-1.5 py-[3px] ${active ? "bg-[#ec6a26]/15 text-[#f39a4a]" : "text-white/65"}`} style={{ paddingLeft: 6 + depth * 12 }}>
-              <span className="text-white/30">{folder ? "▾" : "·"}</span>
+              <span className="text-white/55">{folder ? "▾" : "·"}</span>
               {name}
             </div>
           ))}
@@ -79,7 +79,7 @@ function CodeMock() {
           <div className="flex-1 overflow-hidden px-4 py-3 font-mono text-[11.5px] leading-[20px]">
             {code.map((line, i) => (
               <div key={i} className="flex gap-4 whitespace-nowrap">
-                <span className="w-4 text-right text-white/20">{i + 1}</span>
+                <span className="w-4 text-right text-white/45">{i + 1}</span>
                 <span className="text-white/80">{line}</span>
               </div>
             ))}

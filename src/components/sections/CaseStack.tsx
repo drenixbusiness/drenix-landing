@@ -7,7 +7,7 @@ import { Mockup } from "@/components/mockups/Mockups";
 
 const plates: Record<CaseStudy["plate"], string> = {
   bone: "bg-stone-2 text-graphite",
-  ember: "bg-ember text-white",
+  ember: "bg-ember-deep text-white",
   umber: "bg-graphite text-white",
   ink: "bg-[#e9c9cf] text-graphite",
 };
@@ -29,7 +29,7 @@ function Card({ c, i, total, progress }: { c: CaseStudy; i: number; total: numbe
               <h3 className="text-xl font-medium md:text-2xl">{c.title}</h3>
               <div className="mt-4 flex flex-wrap gap-2">
                 {c.services.map((s) => (
-                  <span key={s} className="label rounded-full border border-current/25 px-3 py-1.5 text-[9px] opacity-85">{s}</span>
+                  <span key={s} className="label rounded-full border border-current/25 px-3 py-1.5 text-[9px]">{s}</span>
                 ))}
               </div>
             </div>

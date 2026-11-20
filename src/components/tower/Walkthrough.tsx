@@ -187,7 +187,7 @@ export function Walkthrough() {
               className="panel-light w-full max-w-[380px] rounded-[14px] p-5 text-graphite"
             >
               <p className="label text-[10px]">{room.name}</p>
-              <h3 className="mt-1.5 text-[22px] font-medium leading-tight tracking-[-0.01em]">{room.title}</h3>
+              <h2 className="mt-1.5 text-[22px] font-medium leading-tight tracking-[-0.01em]">{room.title}</h2>
               <p className="mt-2 text-[13.5px] leading-relaxed text-smoke">{room.text}</p>
               <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-hair pt-3">
                 {room.specs.map(([k, v]) => (

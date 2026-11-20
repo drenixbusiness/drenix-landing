@@ -30,7 +30,7 @@ export function Footer() {
               {floors.slice(0, 6).map((f) => (
                 <li key={f.slug}>
                   <Link href={`/services/${f.slug}`} className="text-white/75 hover:text-white">
-                    <span className="mr-2 text-white/35 tabular-nums">{f.level}</span>{f.name}
+                    <span className="mr-2 text-white/55 tabular-nums">{f.level}</span>{f.name}
                   </Link>
                 </li>
               ))}

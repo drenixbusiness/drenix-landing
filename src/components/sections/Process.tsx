@@ -20,10 +20,10 @@ export function Process({ tone = "dark" }: { tone?: "dark" | "light" }) {
                 <h3 className="text-2xl font-semibold md:col-span-3">{s.title}</h3>
                 <p className={`md:col-span-4 ${light ? "text-umber/70" : "text-graphite/65"}`}>{s.text}</p>
                 <p className="md:col-span-3">
-                  <span className={`label block ${light ? "text-umber/45" : "text-graphite/40"}`}>Result</span>
+                  <span className={`label block ${light ? "text-umber/45" : "text-graphite/65"}`}>Result</span>
                   {s.result}
                 </p>
-                <span className={`label md:col-span-1 md:text-right ${light ? "text-umber/55" : "text-graphite/50"}`}>{s.time}</span>
+                <span className={`label md:col-span-1 md:text-right ${light ? "text-umber/75" : "text-graphite/65"}`}>{s.time}</span>
               </div>
             </Reveal>
           ))}

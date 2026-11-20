@@ -58,13 +58,14 @@ export function Header() {
         <div className="container-x">
           <div className="flex h-[68px] items-center justify-between gap-6">
             <Link href="/" className="flex items-center gap-2.5" aria-label="DRENIX, home">
-              <Image src="/brand/phoenix.png" alt="" width={26} height={26} priority className="size-[26px]" />
+              <Image src="/brand/phoenix.png" alt="" width={26} height={26} loading="eager" className="size-[26px]" />
               <Image
                 src={open || light ? "/brand/wordmark-light.png" : "/brand/wordmark-dark.png"}
                 alt="DRENIX"
                 width={958}
                 height={144}
-                priority
+                loading="eager"
+                sizes="96px"
                 className="h-[12px] w-auto"
               />
             </Link>

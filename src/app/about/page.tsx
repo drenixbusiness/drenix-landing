@@ -51,7 +51,7 @@ export default function AboutPage() {
           {values.map((v, i) => (
             <Reveal key={v.title} delay={(i % 2) * 0.06} className="bg-stone p-8 md:p-10">
               <span className="label text-ember">0{i + 1}</span>
-              <h3 className="mt-8 text-2xl font-semibold">{v.title}</h3>
+              <h2 className="mt-8 text-2xl font-semibold">{v.title}</h2>
               <p className="mt-2 max-w-md text-lg text-graphite/65">{v.text}</p>
             </Reveal>
           ))}

@@ -73,14 +73,14 @@ export default function StartupsPage() {
         <SectionHead title="Four|stages" />
         <ol className="mt-16 border-t border-hair">
           {launchpadStages.map((s, i) => (
-            <Reveal key={s.no} delay={i * 0.05}>
-              <li className="grid gap-3 border-b border-hair py-8 md:grid-cols-12 md:items-baseline">
+            <li key={s.no} className="border-b border-hair">
+              <Reveal delay={i * 0.05} className="grid gap-3 py-8 md:grid-cols-12 md:items-baseline">
                 <span className="wide text-3xl text-ember md:col-span-3">{s.title}</span>
                 <span className="text-xl font-medium md:col-span-3">{s.sub}</span>
                 <span className="text-graphite/65 md:col-span-4">{s.text}</span>
-                <span className="label text-graphite/50 md:col-span-2 md:text-right">{s.weeks}</span>
-              </li>
-            </Reveal>
+                <span className="label text-graphite/65 md:col-span-2 md:text-right">{s.weeks}</span>
+              </Reveal>
+            </li>
           ))}
         </ol>
       </section>

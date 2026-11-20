@@ -67,17 +67,20 @@ export function TowerJourney() {
   const [deep, setDeep] = useState(false);
   useEffect(() => {
     if (getTier() === "low") return;
-    // Start WebGL only after the page has loaded, so it never competes with first paint
+    // WebGL is heavy (three.js parse, model decode, shader compile). The poster already
+    // looks identical, so the 3D scene starts on the visitor's first sign of life
+    // (mouse move, touch, scroll, key) instead of competing with the first load.
+    const events = ["pointermove", "pointerdown", "touchstart", "wheel", "scroll", "keydown"] as const;
     let idle = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     const go = () => {
-      if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(() => setStart3d(true), { timeout: 1200 });
-      else timer = setTimeout(() => setStart3d(true), 150);
+      events.forEach((e) => window.removeEventListener(e, go));
+      if (typeof window.requestIdleCallback === "function") idle = window.requestIdleCallback(() => setStart3d(true), { timeout: 300 });
+      else timer = setTimeout(() => setStart3d(true), 50);
     };
-    if (document.readyState === "complete") go();
-    else window.addEventListener("load", go, { once: true });
+    events.forEach((e) => window.addEventListener(e, go, { once: true, passive: true }));
     return () => {
-      window.removeEventListener("load", go);
+      events.forEach((e) => window.removeEventListener(e, go));
       if (idle) window.cancelIdleCallback(idle);
       clearTimeout(timer);
     };
@@ -204,7 +207,7 @@ export function TowerJourney() {
               WebkitMaskComposite: "source-in",
             }}
           >
-            <Image src={towerImage.src} alt="DRENIX Tower against a pink evening sky" fill quality={75} priority sizes="160vw" className="object-cover" />
+            <Image src={towerImage.src} alt="DRENIX Tower against a pink evening sky" fill quality={75} sizes="160vw" className="object-cover" />
 
             {/* Qavat chiziqlari */}
             <div className="absolute" style={{ left: `${towerBox.left * 100}%`, width: `${(towerBox.right - towerBox.left) * 100}%`, top: `${towerBox.top * 100}%`, bottom: 0 }}>
@@ -252,36 +255,29 @@ export function TowerJourney() {
                 <h1 className="wide text-[8.2vw] leading-[1.05] sm:text-[6vw] lg:text-[3.9vw] 2xl:text-[60px]">
                   {["Rise to", "a new", "level"].map((l, i) => (
                     <span key={l} className="block overflow-hidden">
-                      <motion.span
-                        className={`block ${i === 2 ? "opacity-85" : ""}`}
-                        initial={{ y: "110%" }}
-                        animate={{ y: "0%" }}
-                        transition={{ delay: 0.2 + i * 0.1, duration: 1.1, ease }}
-                      >
+                      <span className={`hero-rise block ${i === 2 ? "opacity-85" : ""}`} style={{ animationDelay: `${0.1 + i * 0.08}s` }}>
                         {l}
-                      </motion.span>
+                      </span>
                     </span>
                   ))}
                 </h1>
-                <motion.p initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7, duration: 0.9, ease }} className="mt-6 max-w-[22rem] text-[15px] leading-relaxed text-white/90">
+                <p className="hero-up mt-6 max-w-[22rem] text-[15px] leading-relaxed text-white/90">
                   A ten-floor IT company. Every floor has its own team: development, design, marketing, AI and more. Pick the floor you need.
-                </motion.p>
-                <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.85, duration: 0.9, ease }} className="mt-8 flex flex-wrap gap-2.5">
+                </p>
+                <div className="hero-in mt-8 flex flex-wrap gap-2.5" style={{ animationDelay: "0.35s" }}>
                   <button onClick={() => toWalkthrough()} className="label flex h-11 items-center gap-3 rounded-full bg-white px-5 text-graphite transition-colors hover:bg-white/85">
                     Step inside <span aria-hidden>→</span>
                   </button>
                   <Link href="/contact" className="label flex h-11 items-center rounded-full bg-black/35 px-5 backdrop-blur-md transition-colors hover:bg-black/55">
                     Book a meeting
                   </Link>
-                </motion.div>
+                </div>
               </div>
 
               {/* ---------- AURUM paneli ---------- */}
-              <motion.aside
-                initial={{ opacity: 0, x: 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1, duration: 1, ease }}
-                className="panel-dark pointer-events-auto hidden w-[300px] justify-self-end rounded-[10px] p-5 lg:col-span-4 lg:col-start-9 lg:block xl:w-[320px]"
+              <aside
+                style={{ animationDelay: "0.5s" }}
+                className="hero-in panel-dark pointer-events-auto hidden w-[300px] justify-self-end rounded-[10px] p-5 lg:col-span-4 lg:col-start-9 lg:block xl:w-[320px]"
                 onMouseEnter={() => setTouched(true)}
               >
                 <div className="flex items-start justify-between">
@@ -340,7 +336,7 @@ export function TowerJourney() {
                     Details →
                   </Link>
                 </div>
-              </motion.aside>
+              </aside>
             </div>
 
             {/* Mobil: tanlangan qavat */}
@@ -353,14 +349,14 @@ export function TowerJourney() {
             </div>
 
             {/* Pastki raqamlar */}
-            <motion.dl initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2, duration: 1 }} className="mb-7 hidden items-stretch gap-0 md:flex">
+            <dl style={{ animationDelay: "0.6s" }} className="hero-in mb-7 hidden items-stretch gap-0 md:flex">
               {[["10", "Floors"], ["24", "Hour response"], ["12", "Month warranty"], ["0", "Cost of audit"]].map(([v, l], i) => (
                 <div key={l} className={`pr-8 ${i ? "border-l border-white/30 pl-8" : ""}`}>
                   <dd className="wide text-[28px] leading-none">{v}</dd>
                   <dt className="label mt-2 text-[9px] text-white/75">{l}</dt>
                 </div>
               ))}
-            </motion.dl>
+            </dl>
           </div>
         </motion.div>
 

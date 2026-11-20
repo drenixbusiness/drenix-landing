@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 2592000,
   },
   partialPrefetching: true,
+  // Public source maps: lets Lighthouse/DevTools attribute JS cost (they are only fetched by devtools)
+  productionBrowserSourceMaps: true,
   // 3D models, panoramas and the Draco decoder rarely change: let browsers and CDNs keep them
   async headers() {
     const cache = [{ key: "Cache-Control", value: "public, max-age=2592000, stale-while-revalidate=604800" }];

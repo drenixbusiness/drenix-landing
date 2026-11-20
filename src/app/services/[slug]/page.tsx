@@ -72,7 +72,7 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
       </section>
 
       <section className="container-x grid gap-10 py-24 md:py-32 lg:grid-cols-12">
-        <p className="label text-graphite/50 lg:col-span-3">How we work</p>
+        <p className="label text-graphite/65 lg:col-span-3">How we work</p>
         <Reveal className="lg:col-span-8">
           <p className="text-2xl leading-[1.35] md:text-[34px]">{s.description}</p>
         </Reveal>
@@ -83,7 +83,7 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
           {s.features.map((f, i) => (
             <Reveal key={f.title} delay={(i % 2) * 0.06} className="bg-stone p-8 md:p-10">
               <span className="label text-ember">0{i + 1}</span>
-              <h3 className="mt-8 text-2xl font-semibold">{f.title}</h3>
+              <h2 className="mt-8 text-2xl font-semibold">{f.title}</h2>
               <p className="mt-2 max-w-md text-lg text-graphite/65">{f.text}</p>
             </Reveal>
           ))}
@@ -120,7 +120,7 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
       <section className="container-x py-16">
         <Link href={`/services/${next.slug}`} className="group flex items-end justify-between gap-6 border-b border-hair pb-10">
           <span>
-            <span className="label text-graphite/45">Next service</span>
+            <span className="label text-graphite/65">Next service</span>
             <span className="wide mt-3 block text-[4.6vw] transition-colors group-hover:text-ember md:text-[3.6vw] 2xl:text-[52px]">{next.title}</span>
           </span>
           <span className="text-4xl transition-transform group-hover:translate-x-2">→</span>

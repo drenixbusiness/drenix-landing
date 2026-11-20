@@ -106,7 +106,7 @@ export function ContactForm({ initialService }: { initialService?: string }) {
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden />
 
       <div className="flex flex-col gap-5 border-t border-umber/15 pt-7 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-xs text-sm text-umber/55">By submitting, you agree to the processing of your personal data.</p>
+        <p className="max-w-xs text-sm text-umber/75">By submitting, you agree to the processing of your personal data.</p>
         <button
           type="submit"
           disabled={status === "sending"}

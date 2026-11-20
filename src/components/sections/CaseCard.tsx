@@ -21,9 +21,10 @@ export function CaseCard({ c, index = 0 }: { c: CaseStudy; index?: number }) {
         </div>
         <div className="mt-5 flex items-start justify-between gap-6">
           <div>
-            <h3 className="text-xl font-medium md:text-2xl">{c.title}</h3>
-            <p className="mt-1.5 text-graphite/50">{c.client} · {c.services.join(", ")}</p>
-          </div>        </div>
+            <h2 className="text-xl font-medium md:text-2xl">{c.title}</h2>
+            <p className="mt-1.5 text-graphite/65">{c.client} · {c.services.join(", ")}</p>
+          </div>
+        </div>
       </article>
     </Reveal>
   );
