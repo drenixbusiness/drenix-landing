@@ -24,9 +24,9 @@ function Window({ title, children, light = false, url }: { title: string; childr
           <span className="size-2.5 rounded-full bg-[#28c840]" />
         </div>
         {url ? (
-          <div className={`mx-auto flex h-6 w-[280px] items-center justify-center rounded-md text-[11px] ${light ? "bg-black/5 text-black/50" : "bg-white/[0.06] text-white/45"}`}>{url}</div>
+          <div className={`mx-auto flex h-6 w-[280px] items-center justify-center rounded-md text-[11px] ${light ? "bg-black/5 text-black/50" : "bg-white/[0.06] text-white/65"}`}>{url}</div>
         ) : (
-          <span className={`mx-auto text-[11px] font-medium ${light ? "text-black/50" : "text-white/45"}`}>{title}</span>
+          <span className={`mx-auto text-[11px] font-medium ${light ? "text-black/50" : "text-white/65"}`}>{title}</span>
         )}
         <span className="w-[42px]" />
       </div>
@@ -42,7 +42,7 @@ function CodeMock() {
   const files = [
     ["app", 0, true], ["layout.tsx", 1], ["page.tsx", 1, false, true], ["checkout", 1, true], ["components", 0, true], ["Cart.tsx", 1], ["Payment.tsx", 1], ["lib", 0, true], ["payme.ts", 1],
   ] as const;
-  const k = "text-[#f39a4a]", s = "text-[#9ccf8a]", f = "text-[#7fb6ff]", c = "text-white/55";
+  const k = "text-[#f39a4a]", s = "text-[#9ccf8a]", f = "text-[#7fb6ff]", c = "text-white/65";
   const code: ReactNode[] = [
     <><span className={k}>import</span> {"{ Cart }"} <span className={k}>from</span> <span className={s}>&quot;@/components/Cart&quot;</span>;</>,
     <><span className={k}>import</span> {"{ createPayment }"} <span className={k}>from</span> <span className={s}>&quot;@/lib/payme&quot;</span>;</>,
@@ -65,7 +65,7 @@ function CodeMock() {
           <p className={`mb-2 ${muted}`}>PROJECT</p>
           {files.map(([name, depth, folder, active]) => (
             <div key={name} className={`flex items-center gap-1.5 rounded px-1.5 py-[3px] ${active ? "bg-[#ec6a26]/15 text-[#f39a4a]" : "text-white/65"}`} style={{ paddingLeft: 6 + depth * 12 }}>
-              <span className="text-white/55">{folder ? "▾" : "·"}</span>
+              <span className="text-white/65">{folder ? "▾" : "·"}</span>
               {name}
             </div>
           ))}
@@ -79,7 +79,7 @@ function CodeMock() {
           <div className="flex-1 overflow-hidden px-4 py-3 font-mono text-[11.5px] leading-[20px]">
             {code.map((line, i) => (
               <div key={i} className="flex gap-4 whitespace-nowrap">
-                <span className="w-4 text-right text-white/45">{i + 1}</span>
+                <span className="w-4 text-right text-white/65">{i + 1}</span>
                 <span className="text-white/80">{line}</span>
               </div>
             ))}
@@ -274,19 +274,19 @@ function PitchMock() {
         </div>
         <div className="flex flex-1 items-center justify-center bg-[#e9e4de] p-5">
           <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md bg-[#1a1210] p-6 text-[#efe7dd] shadow-xl">
-            <p className="text-[10px] uppercase tracking-wider text-white/40">05 · Traction</p>
+            <p className="text-[10px] uppercase tracking-wider text-white/65">05 · Traction</p>
             <p className="mt-2 text-[34px] font-extrabold uppercase leading-[0.9]" style={{ fontStretch: "72%" }}><span className="text-[#f39a4a]">4,200</span> sellers<br />in 6 months</p>
             <div className="absolute bottom-6 right-6 flex h-[120px] items-end gap-2">
               {[14, 22, 31, 45, 63, 92].map((h, i) => (
                 <div key={i} className="flex flex-col items-center gap-1">
                   <div className="w-7 rounded-t-sm" style={{ height: h, background: i === 5 ? "#ec6a26" : "rgba(239,231,221,0.2)" }} />
-                  <span className="text-[8px] text-white/40">{["Jun", "Jul", "Aug", "Sep", "Oct", "Nov"][i]}</span>
+                  <span className="text-[8px] text-white/65">{["Jun", "Jul", "Aug", "Sep", "Oct", "Nov"][i]}</span>
                 </div>
               ))}
             </div>
             <div className="absolute bottom-6 left-6 flex gap-5 text-[10px]">
-              <div><p className="text-white/40">Monthly growth</p><p className="text-[16px] font-semibold">+38%</p></div>
-              <div><p className="text-white/40">GMV</p><p className="text-[16px] font-semibold">$184K</p></div>
+              <div><p className="text-white/65">Monthly growth</p><p className="text-[16px] font-semibold">+38%</p></div>
+              <div><p className="text-white/65">GMV</p><p className="text-[16px] font-semibold">$184K</p></div>
             </div>
           </div>
         </div>
@@ -310,9 +310,9 @@ function ChatMock() {
             <div className="max-w-[78%] rounded-2xl rounded-bl-md bg-[#241b17] px-3 py-2">Hello! Yes, the evening group meets Monday, Wednesday and Friday at 18:30. There are 3 seats left. Would you like a free placement test?</div>
             <div className="ml-auto max-w-[60%] rounded-2xl rounded-br-md bg-[#ec6a26] px-3 py-2 text-[#17110e]">Yes, can I come tomorrow?</div>
             <div className="max-w-[78%] rounded-2xl rounded-bl-md bg-[#241b17] px-3 py-2">Of course. Does 15:00 or 17:00 tomorrow work? Please send your name and phone number.</div>
-            <div className="mx-auto w-fit rounded-full border border-white/10 px-3 py-1 text-[10.5px] text-white/50">CRM: new lead created · #4821</div>
+            <div className="mx-auto w-fit rounded-full border border-white/10 px-3 py-1 text-[10.5px] text-white/65">CRM: new lead created · #4821</div>
           </div>
-          <div className="m-3 flex items-center rounded-full bg-[#241b17] px-4 py-2 text-white/35">Write a message…</div>
+          <div className="m-3 flex items-center rounded-full bg-[#241b17] px-4 py-2 text-white/65">Write a message…</div>
         </div>
         <div className="w-[170px] shrink-0 space-y-3 border-l border-white/[0.07] p-3.5">
           <p className="font-medium">Today</p>
@@ -357,7 +357,7 @@ function PipelineMock() {
                 <span key={i} className="flex-1 rounded-[1px]" style={{ background: i === 37 ? "#f39a4a" : "#9ccf8a", opacity: i === 37 ? 1 : 0.7 }} />
               ))}
             </div>
-            <div className="mt-4 space-y-1 font-mono text-[10.5px] text-white/55">
+            <div className="mt-4 space-y-1 font-mono text-[10.5px] text-white/65">
               <p>14:02:11 api-7f9c · health ok · 42 ms</p>
               <p>14:02:11 web-2b1a · health ok · 18 ms</p>
               <p className="text-[#f39a4a]">14:01:58 autoscale: 3 → 5 replica</p>
@@ -390,13 +390,15 @@ function SecurityMock() {
     <Window title="Security audit — report">
       <div className="grid h-full grid-cols-[180px_1fr] gap-3 p-4">
         <div className="flex flex-col items-center justify-center rounded-lg border border-white/[0.07] bg-[#1e1713] p-3">
-          <svg viewBox="0 0 100 100" className="size-[110px] -rotate-90">
-            <circle cx="50" cy="50" r="42" fill="none" stroke="white" strokeOpacity="0.07" strokeWidth="9" />
-            <circle cx="50" cy="50" r="42" fill="none" stroke="#9ccf8a" strokeWidth="9" pathLength="100" strokeDasharray="86 100" strokeLinecap="round" />
-          </svg>
-          <p className="-mt-[72px] text-[30px] font-bold">A</p>
-          <p className={`mb-8 ${muted}`}>before: D</p>
-          <p className="mt-6 text-center text-[11px] text-white/55">23 checks<br />5 findings</p>
+          <div className="relative grid place-items-center">
+            <svg viewBox="0 0 100 100" className="size-[110px] -rotate-90">
+              <circle cx="50" cy="50" r="42" fill="none" stroke="white" strokeOpacity="0.07" strokeWidth="9" />
+              <circle cx="50" cy="50" r="42" fill="none" stroke="#9ccf8a" strokeWidth="9" pathLength="100" strokeDasharray="86 100" strokeLinecap="round" />
+            </svg>
+            <p className="absolute text-[34px] font-bold leading-none">A</p>
+          </div>
+          <p className={`mt-3 ${muted}`}>Was D</p>
+          <p className="mt-4 text-center text-[11px] text-white/70">23 checks<br />5 findings</p>
         </div>
         <div className="rounded-lg border border-white/[0.07] bg-[#1e1713] p-3">
           <div className="mb-2 flex justify-between"><p className="font-medium">Findings</p><p className={muted}>OWASP Top 10</p></div>
@@ -426,7 +428,7 @@ function CrmMock() {
       <div className="flex h-full flex-col p-4">
         <div className="mb-3 flex items-center justify-between">
           <div className="flex gap-2 text-[11px]">
-            {["All deals", "Mine", "This month"].map((t, i) => <span key={t} className={`rounded-full px-2.5 py-1 ${i === 0 ? "bg-white/10" : "text-white/45"}`}>{t}</span>)}
+            {["All deals", "Mine", "This month"].map((t, i) => <span key={t} className={`rounded-full px-2.5 py-1 ${i === 0 ? "bg-white/10" : "text-white/65"}`}>{t}</span>)}
           </div>
           <p className={muted}>Pipeline: <span className="font-semibold text-white/85">$88.5K</span></p>
         </div>

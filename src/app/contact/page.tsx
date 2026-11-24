@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ContactForm } from "@/components/contact/ContactForm";
+import { ArtPicture } from "@/components/ui/ArtPicture";
 import { Lines } from "@/components/ui/Reveal";
 import { site } from "@/lib/site";
 
@@ -24,33 +25,34 @@ export default function ContactPage(props: PageProps<"/contact">) {
   ];
 
   return (
-    <section className="pt-[72px]">
-      <div className="container-x grid gap-16 pb-24 pt-14 md:pb-32 md:pt-20 lg:grid-cols-12">
+    <>
+      <section className="container-x grid gap-12 pb-20 pt-28 md:pb-28 md:pt-36 lg:grid-cols-12">
         <div className="lg:col-span-5">
-          <Lines as="h1" immediate delay={0.1} text="Contact" className="wide text-[12vw] md:text-[6vw] lg:text-[4.4vw] 2xl:text-[68px]" />
-          <p className="hero-up mt-8 max-w-md text-xl leading-relaxed text-graphite/70">
+          <Lines as="h1" immediate delay={0.05} text="Contact" className="wide text-[clamp(34px,10vw,48px)] leading-[1.1] lg:text-[clamp(44px,4.4vw,64px)]" />
+          <p className="hero-up mt-5 max-w-md text-[18px] leading-relaxed text-smoke md:text-[20px]">
             Fill in the form or reach us however suits you. We reply within 24 hours.
           </p>
-          <div style={{ animationDelay: "0.3s" }} className="hero-in mt-12">
-            <dl className="border-t border-hair">
-              {rows.map((r) => (
-                <div key={r.k} className="flex items-baseline justify-between gap-6 border-b border-hair py-4">
-                  <dt className="label text-graphite/65">{r.k}</dt>
-                  <dd className="text-right text-lg">
-                    {r.href ? <a href={r.href} className="transition-colors hover:text-ember">{r.v}</a> : r.v}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
+          <dl className="hero-in mt-10 border-t border-hair" style={{ animationDelay: "0.2s" }}>
+            {rows.map((r) => (
+              <div key={r.k} className="flex min-h-14 items-center justify-between gap-6 border-b border-hair py-2">
+                <dt className="text-[16px] text-smoke">{r.k}</dt>
+                <dd className="text-right text-[18px] font-medium">
+                  {r.href ? <a href={r.href} className="inline-flex min-h-11 items-center underline decoration-graphite/25 underline-offset-[6px] hover:decoration-graphite">{r.v}</a> : r.v}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
-        <div style={{ animationDelay: "0.2s" }} className="hero-in lg:col-span-7">
+        <div className="hero-in lg:col-span-7" style={{ animationDelay: "0.1s" }}>
           <Suspense fallback={<ContactForm />}>
             <FormWithParams searchParams={props.searchParams} />
           </Suspense>
         </div>
+      </section>
+      <div className="relative h-[56svh] min-h-[320px] overflow-hidden">
+        <ArtPicture wide="/media/cta.webp" tall="/media/cta-tall.webp" alt="Main entrance of the DRENIX tower" />
       </div>
-    </section>
+    </>
   );
 }

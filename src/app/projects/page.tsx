@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { PageHero } from "@/components/sections/PageHero";
-import { CaseCard } from "@/components/sections/CaseCard";
 import { CTA } from "@/components/sections/CTA";
+import { CaseCard } from "@/components/sections/CaseCard";
+import { PageHero } from "@/components/sections/PageHero";
+import { Button } from "@/components/ui/Button";
 import { cases } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -14,11 +15,13 @@ export default function CasesPage() {
     <>
       <PageHero
         crumbs={[{ href: "/projects", label: "Projects" }]}
-        image="/media/workspace-city.webp"
+        image="hero-projects"
         title="Projects"
         text="Every project started from a clear business goal. We share detailed case studies, including numbers and client-approved details, in a meeting."
-      />
-      <section className="container-x pb-24 md:pb-36">
+      >
+        <Button href="/contact">Ask for a case</Button>
+      </PageHero>
+      <section className="container-x py-20 md:py-28">
         <div className="grid gap-x-8 gap-y-16 md:grid-cols-2">
           {cases.map((c, i) => (
             <CaseCard key={c.slug} c={c} index={i} />

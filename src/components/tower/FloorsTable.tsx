@@ -2,42 +2,37 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { floors } from "@/lib/tower";
-import { serviceImage } from "@/lib/media";
+import { Icon, departmentIcon } from "@/components/ui/Icon";
 import { SectionHead } from "@/components/ui/Misc";
+import { floors } from "@/lib/tower";
 
 const filters = [
-  { id: "all", label: "All" },
+  { id: "all", label: "All departments", slugs: null },
   { id: "build", label: "Build", slugs: ["web-and-mobile-development", "ui-ux-design-and-branding", "cloud-and-devops", "cybersecurity"] },
   { id: "grow", label: "Grow", slugs: ["digital-marketing", "business-development", "crm-and-erp"] },
   { id: "launch", label: "Launch", slugs: ["startup-support", "ai-and-automation", "it-outsourcing"] },
 ] as const;
 
-/** Styled like an "available units" table on real-estate sites: floors = services. */
+/** All departments as a list; the picture shows the floor of the row under the pointer or focus. */
 export function FloorsTable() {
   const [filter, setFilter] = useState<(typeof filters)[number]["id"]>("all");
-  const [hover, setHover] = useState(floors[0].slug);
-  const list = floors.filter((f) => {
-    const flt = filters.find((x) => x.id === filter);
-    return !flt || !("slugs" in flt) || (flt.slugs as readonly string[]).includes(f.slug);
-  });
+  const [current, setCurrent] = useState(0);
+  const slugs: readonly string[] | null = filters.find((x) => x.id === filter)?.slugs ?? null;
 
   return (
-    <section className="bg-stone text-graphite" data-header="dark">
-      <div className="container-x py-24 md:py-32">
-        <SectionHead
-          title="All|floors"
-          text="Every floor is its own team and service. Start with one floor or combine several."
-        />
+    <section className="cv bg-stone text-graphite [--cv:1400px]">
+      <div className="container-x py-20 md:py-28">
+        <SectionHead title="All|departments" text="Every floor is its own team. Start with one, or combine several in one project: you still talk to one manager." />
 
-        <div className="mt-14 flex flex-wrap gap-2">
+        <div className="mt-10 flex flex-wrap gap-2" role="group" aria-label="Filter departments">
           {filters.map((f) => (
             <button
               key={f.id}
+              type="button"
+              aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
-              className={`label rounded-full border px-4 py-2.5 transition-colors ${filter === f.id ? "border-graphite bg-graphite text-white" : "border-hair hover:border-graphite/50"}`}
+              className={`min-h-11 rounded-full border px-5 text-[15px] font-medium transition-colors ${filter === f.id ? "border-graphite bg-graphite text-white" : "border-graphite/25 hover:border-graphite"}`}
             >
               {f.label}
             </button>
@@ -45,73 +40,63 @@ export function FloorsTable() {
         </div>
 
         <div className="mt-8 grid gap-10 lg:grid-cols-12">
-          <div className="lg:col-span-8">
-            <div className="label hidden grid-cols-12 gap-4 border-b border-graphite/80 pb-3 text-smoke md:grid">
-              <span className="col-span-2">Floor</span>
-              <span className="col-span-4">Service</span>
-              <span className="col-span-3">Team</span>
-              <span className="col-span-2">Timeline</span>
-              <span className="col-span-1 text-right" />
-            </div>
-            <ul>
-              <AnimatePresence initial={false}>
-                {list.map((f) => (
-                  <motion.li
-                    key={f.slug}
-                    layout
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    onMouseEnter={() => setHover(f.slug)}
+          <ul className="border-t border-graphite/60 lg:col-span-7">
+            {floors.map((f, i) => {
+              if (slugs && !slugs.includes(f.slug)) return null;
+              return (
+                <li key={f.slug} className="border-b border-hair">
+                  <Link
+                    href={`/services/${f.slug}`}
+                    onMouseEnter={() => setCurrent(i)}
+                    onFocus={() => setCurrent(i)}
+                    className={`group flex items-center gap-4 rounded-lg px-2 py-5 transition-colors md:gap-6 md:px-3 ${current === i ? "lg:bg-white/70" : ""}`}
                   >
-                    <Link href={`/services/${f.slug}`} className={`group grid grid-cols-12 items-center gap-4 border-b border-hair py-5 transition-colors ${hover === f.slug ? "bg-white/60" : ""}`}>
-                      <span className="wide col-span-2 pl-2 text-[20px] md:text-[18px]">{f.level}</span>
-                      <span className="col-span-10 md:col-span-4">
-                        <span className="block font-medium">{f.title}</span>
-                        <span className="block text-sm text-smoke">{f.short}</span>
-                      </span>
-                      <span className="label col-span-6 col-start-3 text-[9px] text-smoke md:col-span-3 md:col-start-auto md:text-graphite">{f.name}</span>
-                      <span className="col-span-4 text-sm md:col-span-2">{f.specs[0][1]}</span>
-                      <span className="col-span-1 hidden text-right md:block">
-                        <span className="inline-grid size-8 place-items-center rounded-full border border-hair transition-all group-hover:border-graphite group-hover:bg-graphite group-hover:text-white">→</span>
-                      </span>
-                    </Link>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-          </div>
+                    <span className="wide tabular w-9 text-[18px]">{f.level}</span>
+                    <Icon name={departmentIcon[f.slug]} className="size-6 text-ember-text max-sm:hidden" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-[19px] font-semibold leading-tight">{f.name}</span>
+                      <span className="mt-1 block text-[16px] text-smoke">{f.title}</span>
+                    </span>
+                    <span className="hidden w-32 text-[15px] text-smoke md:block">{f.specs[0][1]}</span>
+                    <span className="grid size-11 shrink-0 place-items-center rounded-full border border-graphite/20 transition-colors group-hover:border-graphite group-hover:bg-graphite group-hover:text-white">
+                      <Icon name="arrow-right" />
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
 
-          {/* Side panel: photo of the selected floor */}
-          <div className="hidden lg:col-span-4 lg:block">
-            <div className="sticky top-28">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-[14px] bg-stone-2">
-                <AnimatePresence initial={false}>
-                  <motion.div key={hover} initial={{ opacity: 0, scale: 1.06 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.6 }} className="absolute inset-0">
-                    <Image src={serviceImage[hover]} alt="" fill quality={75} sizes="30vw" className="object-cover" />
-                  </motion.div>
-                </AnimatePresence>
-                {(() => {
-                  const f = floors.find((x) => x.slug === hover)!;
-                  return (
-                    <div className="panel-light absolute inset-x-3 bottom-3 rounded-[10px] p-4">
-                      <div className="flex items-baseline justify-between">
-                        <span className="label text-smoke">Floor</span>
-                        <span className="wide text-2xl">{f.level}</span>
-                      </div>
-                      <p className="mt-2 font-medium">{f.title}</p>
-                      <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-hair pt-3 text-[13px]">
-                        {f.specs.map(([k, v]) => (
-                          <div key={k}>
-                            <dt className="label text-[8px] text-smoke">{k}</dt>
-                            <dd className="mt-0.5 font-medium">{v}</dd>
-                          </div>
-                        ))}
-                      </dl>
+          {/* The floor of the current row, pulled out of the tower */}
+          <div className="hidden lg:col-span-5 lg:block">
+            <div className="sticky top-28 overflow-hidden rounded-2xl bg-paper">
+              <div className="relative aspect-[5/4]">
+                {floors.map((f, i) => (
+                  // Neighbours are prepared in advance, so moving along the list never shows an empty frame
+                  Math.abs(i - current) <= 1 && (
+                    <Image
+                      key={f.slug}
+                      src={`/media/open-floor-${f.level}-card.webp`}
+                      alt=""
+                      fill
+                      quality={75}
+                      sizes="(min-width: 1024px) 38vw, 1px"
+                      className={`object-cover transition-opacity duration-500 ${i === current ? "opacity-100" : "opacity-0"}`}
+                    />
+                  )
+                ))}
+              </div>
+              <div className="p-6">
+                <p className="text-[20px] font-semibold">{floors[current].name}</p>
+                <p className="mt-1.5 text-[16px] leading-relaxed text-smoke">{floors[current].lead}</p>
+                <dl className="mt-4 grid grid-cols-2 gap-x-6 border-t border-hair">
+                  {floors[current].specs.map(([k, v]) => (
+                    <div key={k} className="border-b border-hair py-2.5">
+                      <dt className="text-[14px] text-smoke">{k}</dt>
+                      <dd className="text-[15px] font-medium">{v}</dd>
                     </div>
-                  );
-                })()}
+                  ))}
+                </dl>
               </div>
             </div>
           </div>

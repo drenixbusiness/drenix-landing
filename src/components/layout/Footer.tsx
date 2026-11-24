@@ -1,70 +1,66 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Year } from "@/components/ui/Year";
 import { nav, site } from "@/lib/site";
 import { floors } from "@/lib/tower";
-import { Year } from "@/components/ui/Year";
+
+const link = "inline-flex min-h-8 items-center text-white/85 transition-colors hover:text-white hover:underline hover:underline-offset-4";
+const head = "mb-4 text-[16px] font-semibold text-white";
 
 export function Footer() {
   return (
-    <footer className="bg-graphite text-white" data-header="light">
-      <div className="container-x grid gap-14 pb-16 pt-20 lg:grid-cols-12">
+    <footer className="cv on-dark bg-graphite text-white [--cv:1310px] lg:[--cv:500px]" data-header="light">
+      <div className="container-x grid gap-14 pb-14 pt-20 lg:grid-cols-12">
         <div className="lg:col-span-4">
           <div className="flex items-center gap-2.5">
-            <Image src="/brand/phoenix.png" alt="" width={30} height={30} className="size-[30px]" />
-            <Image src="/brand/wordmark-light.png" alt="DRENIX" width={958} height={144} className="h-[13px] w-auto" />
+            <Image src="/brand/phoenix.png" alt="" width={32} height={32} className="size-8" />
+            <Image src="/brand/wordmark-light.png" alt="DRENIX" width={958} height={144} sizes="112px" className="h-[15px] w-auto" />
           </div>
-          <p className="mt-6 max-w-xs text-[15px] leading-relaxed text-white/60">
+          <p className="mt-6 max-w-xs text-[17px] leading-relaxed text-white/80">
             A ten-floor IT company: development, design, marketing, AI and support for startups.
           </p>
-          <div className="mt-8 space-y-1.5">
-            <a href={site.phoneHref} className="block hover:text-ember-light">{site.phone}</a>
-            <a href={`mailto:${site.email}`} className="block hover:text-ember-light">{site.email}</a>
-            <a href={site.telegramHref} className="block hover:text-ember-light">Telegram: {site.telegram}</a>
-          </div>
+          <ul className="mt-6 text-[17px]">
+            <li><a href={site.phoneHref} className="inline-flex min-h-11 items-center hover:text-ember-light">{site.phone}</a></li>
+            <li><a href={`mailto:${site.email}`} className="inline-flex min-h-11 items-center hover:text-ember-light">{site.email}</a></li>
+            <li><a href={site.telegramHref} className="inline-flex min-h-11 items-center hover:text-ember-light">Telegram {site.telegram}</a></li>
+          </ul>
         </div>
 
-        <div className="grid grid-cols-2 gap-10 sm:grid-cols-3 lg:col-span-7 lg:col-start-6">
-          <div>
-            <p className="label mb-5 text-white/45">Floors</p>
-            <ul className="space-y-2.5 text-[15px]">
-              {floors.slice(0, 6).map((f) => (
-                <li key={f.slug}>
-                  <Link href={`/services/${f.slug}`} className="text-white/75 hover:text-white">
-                    <span className="mr-2 text-white/55 tabular-nums">{f.level}</span>{f.name}
-                  </Link>
-                </li>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-12 text-[16px] sm:grid-cols-4 lg:col-span-8">
+          <div className="col-span-2">
+            <p className={head}>Departments</p>
+            <ul className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
+              {floors.map((f) => (
+                <li key={f.slug}><Link href={`/services/${f.slug}`} className={link}>{f.name}</Link></li>
               ))}
             </ul>
           </div>
           <div>
-            <p className="label mb-5 text-white/45">Pages</p>
-            <ul className="space-y-2.5 text-[15px]">
-              {nav.map((n) => (
-                <li key={n.href}><Link href={n.href} className="text-white/75 hover:text-white">{n.label}</Link></li>
-              ))}
+            <p className={head}>Pages</p>
+            <ul className="space-y-1">
+              {nav.map((n) => <li key={n.href}><Link href={n.href} className={link}>{n.label}</Link></li>)}
             </ul>
           </div>
           <div>
-            <p className="label mb-5 text-white/45">Social</p>
-            <ul className="space-y-2.5 text-[15px]">
-              {site.socials.map((s) => (
-                <li key={s.label}><a href={s.href} target="_blank" rel="noreferrer" className="text-white/75 hover:text-white">{s.label} ↗</a></li>
-              ))}
+            <p className={head}>Social</p>
+            <ul className="space-y-1">
+              {site.socials.map((s) => <li key={s.label}><a href={s.href} target="_blank" rel="noreferrer" className={link}>{s.label}<span className="sr-only"> (opens in a new tab)</span></a></li>)}
             </ul>
-            <p className="label mb-3 mt-10 text-white/45">Address</p>
-            <p className="text-[15px] text-white/75">{site.address}<br />{site.hours}</p>
+            <p className="mt-8 text-white/80">{[site.address, ...site.hours.split(", ")].map((l) => <span key={l} className="block">{l}</span>)}</p>
           </div>
         </div>
       </div>
 
       <div className="container-x">
-        <div className="relative h-px bg-white/15">
-          <span className="absolute -left-[5px] -top-[6px] text-[11px] text-white/40">+</span>
-          <span className="absolute -right-[5px] -top-[6px] text-[11px] text-white/40">+</span>
-        </div>
-        <div className="label flex flex-col gap-2 py-6 text-[9px] text-white/45 sm:flex-row sm:justify-between">
-          <span>© <Year /> DRENIX</span>
-          <span>All rights reserved</span>
+        <div className="flex flex-col gap-2 border-t border-white/20 py-6 text-[15px] text-white/75 sm:flex-row sm:justify-between">
+          <span>© <Year /> DRENIX. All rights reserved</span>
+          {/* Required by the licence of the models */}
+          <span>
+            3D models based on work by{" "}
+            <a href="https://sketchfab.com/3d-models/singapore-office-skyscraper-free-2305f0fe03ba44229a1f768dcb48bd8f" target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-white">99.Miles</a> and{" "}
+            <a href="https://sketchfab.com/3d-models/3d-view-office-floor-plan-virtual-reality-83bc80e54f7c4f62849c127e1fe64514" target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-white">webadartist</a>,{" "}
+            <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer" className="underline underline-offset-4 hover:text-white">CC BY 4.0</a>
+          </span>
         </div>
       </div>
     </footer>

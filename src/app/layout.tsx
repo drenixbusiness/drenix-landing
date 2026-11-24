@@ -5,6 +5,7 @@ import { site } from "@/lib/site";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
+import { RevealObserver } from "@/components/ui/RevealObserver";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const michroma = Michroma({ variable: "--font-michroma", subsets: ["latin"], weight: "400" });
@@ -34,11 +35,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${inter.variable} ${michroma.variable} antialiased`}>
       <body className="min-h-dvh">
+        {/* Without JavaScript nothing animates in, so nothing may stay hidden */}
+        <noscript><style>{`.reveal,.hero-in{opacity:1!important;translate:none!important}.lines>span>span{translate:none!important}`}</style></noscript>
+        <a href="#content" className="skip-link">Skip to content</a>
         <SmoothScroll>
           <Header />
-          <main>{children}</main>
+          <main id="content" tabIndex={-1} className="outline-none">{children}</main>
           <Footer />
         </SmoothScroll>
+        <RevealObserver />
       </body>
     </html>
   );

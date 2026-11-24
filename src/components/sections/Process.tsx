@@ -1,33 +1,27 @@
-import { processSteps } from "@/lib/data";
-import { Reveal } from "@/components/ui/Reveal";
+import { Icon } from "@/components/ui/Icon";
 import { SectionHead } from "@/components/ui/Misc";
+import { Reveal } from "@/components/ui/Reveal";
+import { processSteps } from "@/lib/data";
 
 /** Work process: clear stages in a table layout. */
-export function Process({ tone = "dark" }: { tone?: "dark" | "light" }) {
-  const light = tone === "light";
+export function Process() {
   return (
-    <section className={light ? "bg-paper text-umber" : "bg-stone"}>
-      <div className="container-x py-24 md:py-36">
-        <SectionHead
-          title="From first|call to|results"
-          text="Every stage ends with a concrete result in your hands. The estimate and timeline are agreed before work starts."
-        />
-        <div className={`mt-16 border-t ${light ? "border-umber/15" : "border-hair"}`}>
+    <section className="cv bg-paper text-graphite [--cv:1790px] md:[--cv:990px]">
+      <div className="container-x py-20 md:py-28">
+        <SectionHead title="From first call|to results" text="Every stage ends with a concrete result in your hands. The estimate and timeline are agreed before work starts." />
+        <ol className="mt-12 border-t border-hair">
           {processSteps.map((s, i) => (
-            <Reveal key={s.no} delay={i * 0.05}>
-              <div className={`grid gap-3 border-b py-8 md:grid-cols-12 md:items-baseline md:gap-6 ${light ? "border-umber/15" : "border-hair"}`}>
-                <span className="wide text-3xl text-ember md:col-span-1">{s.no}</span>
-                <h3 className="text-2xl font-semibold md:col-span-3">{s.title}</h3>
-                <p className={`md:col-span-4 ${light ? "text-umber/70" : "text-graphite/65"}`}>{s.text}</p>
-                <p className="md:col-span-3">
-                  <span className={`label block ${light ? "text-umber/45" : "text-graphite/65"}`}>Result</span>
-                  {s.result}
-                </p>
-                <span className={`label md:col-span-1 md:text-right ${light ? "text-umber/75" : "text-graphite/65"}`}>{s.time}</span>
-              </div>
-            </Reveal>
+            <li key={s.no} className="border-b border-hair">
+              <Reveal delay={i * 0.04} className="grid gap-3 py-8 md:grid-cols-12 md:items-baseline md:gap-6">
+                <span className="tabular text-[20px] font-semibold text-ember-text md:col-span-1">{i + 1}</span>
+                <h3 className="text-[22px] font-semibold leading-tight md:col-span-3">{s.title}</h3>
+                <p className="text-[17px] leading-relaxed text-smoke md:col-span-4">{s.text}</p>
+                <p className="flex gap-2 text-[16px] font-medium md:col-span-2"><Icon name="box" className="mt-0.5 size-5 text-ember-text" />{s.result}</p>
+                <p className="flex gap-2 text-[16px] text-smoke md:col-span-2 md:justify-end"><Icon name="clock" className="mt-0.5 size-5" />{s.time}</p>
+              </Reveal>
+            </li>
           ))}
-        </div>
+        </ol>
       </div>
     </section>
   );

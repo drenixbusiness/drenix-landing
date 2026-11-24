@@ -1,26 +1,15 @@
-"use client";
+import type { CSSProperties, ElementType, HTMLAttributes } from "react";
 
-import { motion, type HTMLMotionProps } from "motion/react";
-import type { ElementType } from "react";
+type Props = HTMLAttributes<HTMLDivElement> & { delay?: number; y?: number };
 
-type Props = HTMLMotionProps<"div"> & { delay?: number; y?: number };
-
-/** Ko‘rinishga kirganda yumshoq paydo bo‘lish. */
-export function Reveal({ delay = 0, y = 24, children, ...rest }: Props) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-8% 0px" }}
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
-      {...rest}
-    >
-      {children}
-    </motion.div>
-  );
+/** Appears softly when it enters the screen. Pure CSS: RevealObserver only marks the element. */
+export function Reveal({ delay = 0, y, className = "", style, ...rest }: Props) {
+  const vars = { ...(delay ? { "--d": `${delay}s` } : null), ...(y !== undefined ? { "--y": `${y}px` } : null) };
+  // The observer may mark the element before React reaches it
+  return <div className={`reveal ${className}`} style={{ ...style, ...vars } as CSSProperties} suppressHydrationWarning {...rest} />;
 }
 
-/** Sarlavha qatorlari pastdan ko‘tariladi. `|` — yangi qator. */
+/** Title whose lines rise one after another. `|` starts a new line. */
 export function Lines({
   text,
   as: Tag = "h2",
@@ -32,44 +21,23 @@ export function Lines({
   as?: ElementType;
   className?: string;
   delay?: number;
+  /** Above the fold: starts with the first paint instead of waiting for the observer. */
   immediate?: boolean;
 }) {
   const lines = text.split("|");
-  // Above-the-fold titles animate in pure CSS: visible on first paint, no wait for hydration
-  if (immediate) {
-    return (
-      <Tag className={className} aria-label={lines.join(" ")}>
-        <span className="block" aria-hidden>
-          {lines.map((line, i) => (
-            <span key={i} className="block overflow-hidden pb-[0.06em]">
-              <span className="hero-rise block" style={{ animationDelay: `${delay + i * 0.08}s` }}>{line}</span>
-            </span>
-          ))}
-        </span>
-      </Tag>
-    );
-  }
-  const trigger = immediate
-    ? { animate: "show" as const }
-    : { whileInView: "show" as const, viewport: { once: true, margin: "-8% 0px" } };
-
   return (
     <Tag className={className} aria-label={lines.join(" ")}>
-      <motion.span className="block" initial="hidden" {...trigger} aria-hidden>
+      <span className={immediate ? "block" : "lines block"} style={delay && !immediate ? ({ "--d": `${delay}s` } as CSSProperties) : undefined} suppressHydrationWarning aria-hidden>
         {lines.map((line, i) => (
           <span key={i} className="block overflow-hidden pb-[0.06em]">
-            <motion.span
-              className="block"
-              variants={{
-                hidden: { y: "105%" },
-                show: { y: "0%", transition: { duration: 1, delay: delay + i * 0.08, ease: [0.16, 1, 0.3, 1] } },
-              }}
-            >
-              {line}
-            </motion.span>
+            {immediate ? (
+              <span className="hero-rise block" style={{ animationDelay: `${delay + i * 0.08}s` }}>{line}</span>
+            ) : (
+              <span className="block" style={{ "--i": i } as CSSProperties}>{line}</span>
+            )}
           </span>
         ))}
-      </motion.span>
+      </span>
     </Tag>
   );
 }

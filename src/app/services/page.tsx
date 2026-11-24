@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageHero, FactList } from "@/components/sections/PageHero";
-import { Mockup } from "@/components/mockups/Mockups";
-import { Process } from "@/components/sections/Process";
-import { Faq } from "@/components/sections/Faq";
 import { CTA } from "@/components/sections/CTA";
+import { Faq } from "@/components/sections/Faq";
+import { PageHero } from "@/components/sections/PageHero";
+import { Process } from "@/components/sections/Process";
+import { Mockup } from "@/components/mockups/Mockups";
+import { Icon, departmentIcon } from "@/components/ui/Icon";
 import { Reveal } from "@/components/ui/Reveal";
 import { generalFaq, services } from "@/lib/data";
+import { floors } from "@/lib/tower";
 
 export const metadata: Metadata = {
   title: "Services",
@@ -18,50 +20,55 @@ export default function ServicesPage() {
     <>
       <PageHero
         crumbs={[{ href: "/services", label: "Services" }]}
-        image="/media/tower-glass.webp"
+        image="hero-services"
         title="Services"
-        text="Start with one service or combine several. If you are not sure which one you need, we will figure it out together in a free audit."
-        aside={
-          <FactList
-            items={[
-              { label: "Engagement", value: "Project or monthly" },
-              { label: "Initial audit", value: "Free" },
-              { label: "Estimate", value: "In 3–5 days" },
-              { label: "Warranty", value: "12 months" },
-            ]}
-          />
-        }
+        text="Ten departments, one team. Start with one service or combine several. If you are not sure which one you need, we will figure it out together in a free audit."
+        facts={[
+          { label: "Engagement", value: "Project or monthly" },
+          { label: "Initial audit", value: "Free" },
+          { label: "Estimate", value: "In 3–5 days" },
+          { label: "Warranty", value: "12 months" },
+        ]}
       />
 
-      <section className="container-x pb-24 md:pb-36">
-        <div className="border-t border-hair">
-          {services.map((s) => (
-            <Reveal key={s.slug} delay={0.02}>
-              <Link href={`/services/${s.slug}`} className="group grid gap-8 border-b border-hair py-10 md:grid-cols-12 md:items-center md:py-12">
-                <div className="md:col-span-6 lg:col-span-5">
-                  <span className="label text-ember">{s.no}</span>
-                  <h2 className="wide mt-3 text-[4.6vw] transition-colors group-hover:text-ember sm:text-[3.6vw] md:text-[2.2vw] lg:text-[2vw] 2xl:text-[30px]">{s.title}</h2>
-                  <p className="mt-4 max-w-md text-lg text-graphite/65">{s.summary}</p>
-                  <p className="mt-6 text-sm text-graphite/65">{s.timeline}</p>
-                  <span className="mt-6 inline-flex items-center gap-2 font-medium">
-                    <span className="border-b border-graphite/30 pb-0.5 group-hover:border-graphite">Details</span>
-                    <span className="transition-transform group-hover:translate-x-1">→</span>
-                  </span>
-                </div>
-                <div className="md:col-span-6 lg:col-start-7">
-                  <div className="overflow-hidden rounded-[14px] bg-graphite px-5 pt-6 sm:px-8 sm:pt-8">
-                    <div className="-mb-6 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-1.5">
-                      <Mockup kind={s.mock} />
+      <section className="container-x py-16 md:py-24">
+        <ul>
+          {services.map((s, i) => {
+            const f = floors[i];
+            return (
+              <li key={s.slug} className="cv border-t border-hair [--cv:640px] last:border-b md:[--cv:545px]">
+                <Reveal delay={0.02}>
+                  <Link href={`/services/${s.slug}`} className="group grid gap-8 py-10 md:grid-cols-12 md:items-center md:py-14">
+                    <div className="md:col-span-6 lg:col-span-5">
+                      <p className="flex items-center gap-4">
+                        <span className="wide tabular text-[30px] leading-none">{f.level}</span>
+                        <span className="grid size-11 place-items-center rounded-full bg-ember/15 text-ember-text"><Icon name={departmentIcon[s.slug]} className="size-5" /></span>
+                        <span className="text-[17px] font-semibold">{f.name}</span>
+                      </p>
+                      <h2 className="wide mt-5 text-[24px] leading-[1.15] transition-colors group-hover:text-ember-text md:text-[28px]">{s.title}</h2>
+                      <p className="mt-4 max-w-md text-[18px] leading-relaxed text-smoke">{s.summary}</p>
+                      <p className="mt-5 flex items-center gap-2 text-[16px] text-smoke"><Icon name="clock" className="size-5" />{s.timeline}</p>
+                      <span className="mt-5 inline-flex min-h-11 items-center gap-3 text-[16px] font-medium">
+                        <span className="underline decoration-graphite/30 underline-offset-[6px] group-hover:decoration-graphite">See how we work</span>
+                        <Icon name="arrow-right" className="size-4 transition-transform group-hover:translate-x-1" />
+                      </span>
                     </div>
-                  </div>
-                </div>
-              </Link>
-            </Reveal>
-          ))}
-        </div>
+                    <div className="md:col-span-6 lg:col-start-7">
+                      <div className="overflow-hidden rounded-2xl bg-graphite px-5 pt-6 sm:px-8 sm:pt-8">
+                        <div className="-mb-6 transition-transform duration-700 ease-out-expo group-hover:-translate-y-1.5">
+                          <Mockup kind={s.mock} />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </Reveal>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
-      <Process tone="light" />
+      <Process />
       <Faq items={generalFaq} />
       <CTA />
     </>

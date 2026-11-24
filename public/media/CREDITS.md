@@ -35,7 +35,14 @@ Havola: https://www.pexels.com/photo/<ID>/
 
 | Fayl | Manba | Muallif | Litsenziya |
 |---|---|---|---|
-| public/models/tower.glb | [Singapore Office Skyscraper [FREE]](https://sketchfab.com/3d-models/singapore-office-skyscraper-free-2305f0fe03ba44229a1f768dcb48bd8f) | 99.Miles | CC BY 4.0 (optimallashtirilgan: Draco + WebP) |
-| public/models/office.glb | [3D View Office Floor Plan Virtual Reality](https://sketchfab.com/3d-models/3d-view-office-floor-plan-virtual-reality-83bc80e54f7c4f62849c127e1fe64514) | webadartist | CC BY 4.0 (optimallashtirilgan: Draco + WebP) |
-| public/hdri/sky.hdr | [Belfast Sunset (Pure Sky)](https://polyhaven.com/a/belfast_sunset_puresky) | Poly Haven | CC0 |
-| public/hdri/landscape-8k.webp, landscape-4k.webp | [Lilienstein](https://polyhaven.com/a/lilienstein) (8K tonemapped JPG → WebP) | Andreas Mischok / Poly Haven | CC0 |
+| public/models/campus.glb, campus-lite.glb | DRENIX kampusi; minora asosi: [Singapore Office Skyscraper [FREE]](https://sketchfab.com/3d-models/singapore-office-skyscraper-free-2305f0fe03ba44229a1f768dcb48bd8f) | 99.Miles | CC BY 4.0 (o‘zgartirilgan: kampus qo‘shilgan, yengillashtirilgan, Draco + WebP) |
+| public/models/office-hq.glb | [3D View Office Floor Plan Virtual Reality](https://sketchfab.com/3d-models/3d-view-office-floor-plan-virtual-reality-83bc80e54f7c4f62849c127e1fe64514) | webadartist | CC BY 4.0 (o‘zgartirilgan: ranglar, ekranlar, yozuvlar, Draco + WebP) |
+| public/hdri/landscape-2k/4k/8k.webp | [Lilienstein](https://polyhaven.com/a/lilienstein) (8K tonemapped JPG → WebP) | Andreas Mischok / Poly Haven | CC0 |
+
+Saytda muallif nomlari pastki qismda (footer) ko‘rsatilgan: CC BY 4.0 shuni talab qiladi, olib tashlamang.
+
+`campus-poster*`, `hero-*`, `cta*`, `open-floor-*` va `rooms-*` rasmlari shu modellardan render qilingan.
+
+## Hozir ishlatilmaydigan eski fayllar
+
+Yuqoridagi Pexels fotolari, `public/models/tower.glb`, `public/models/office.glb` va `public/hdri/sky.hdr` ([Belfast Sunset](https://polyhaven.com/a/belfast_sunset_puresky), CC0) avvalgi dizayndan qolgan.

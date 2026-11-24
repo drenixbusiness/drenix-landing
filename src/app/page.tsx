@@ -1,5 +1,4 @@
-import { TowerJourney } from "@/components/tower/TowerJourney";
-import { Walkthrough } from "@/components/tower/Walkthrough";
+import { HomeJourney } from "@/components/journey/HomeJourney";
 import { FloorsTable } from "@/components/tower/FloorsTable";
 import { Portal } from "@/components/tower/Portal";
 import { ProcessLine } from "@/components/tower/ProcessLine";
@@ -14,8 +13,7 @@ import { cases, generalFaq } from "@/lib/data";
 export default function Home() {
   return (
     <>
-      <TowerJourney />
-      <Walkthrough />
+      <HomeJourney />
       <FloorsTable />
       <Portal />
       <ProcessLine />

@@ -1,14 +1,14 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { Icon, type IconName } from "./Icon";
 
-type Variant = "primary" | "light" | "dark" | "outline" | "ember";
+type Variant = "primary" | "light" | "glass" | "outline";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-graphite text-white hover:bg-ember",
-  dark: "bg-graphite text-white hover:bg-ember",
-  ember: "bg-ember text-white hover:bg-graphite",
-  light: "bg-white text-graphite hover:bg-white/85",
-  outline: "border border-current/30 hover:border-current/70",
+  primary: "bg-graphite text-white hover:bg-ember-deep",
+  light: "bg-white text-graphite hover:bg-stone-2",
+  glass: "border border-graphite/25 bg-white/60 text-graphite backdrop-blur-md hover:border-graphite hover:bg-white",
+  outline: "border border-current/45 hover:border-current hover:bg-current/10",
 };
 
 type Props = {
@@ -19,27 +19,29 @@ type Props = {
   type?: "button" | "submit";
   disabled?: boolean;
   external?: boolean;
+  icon?: IconName;
 };
 
-/** AURUM uslubidagi pill tugma: mayda keng harflar va strelka. */
-export function Button({ href, children, variant = "primary", className = "", type = "button", disabled, external }: Props) {
-  const cls = `label group inline-flex h-11 items-center gap-3 rounded-full px-5 transition-colors duration-300 disabled:opacity-60 ${variants[variant]} ${className}`;
+/** Pill button, 48 px high, with an arrow. */
+export function Button({ href, children, variant = "primary", className = "", type = "button", disabled, external, icon = "arrow-right" }: Props) {
+  const cls = `group inline-flex min-h-12 items-center justify-center gap-3 rounded-full px-5 text-[15px] font-medium transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`;
   const inner = (
     <>
       <span>{children}</span>
-      <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-0.5">→</span>
+      <Icon name={icon} className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
     </>
   );
   if (href && external) return <a href={href} target="_blank" rel="noreferrer" className={cls}>{inner}</a>;
+  if (href?.startsWith("#")) return <a href={href} className={cls}>{inner}</a>;
   if (href) return <Link href={href} className={cls}>{inner}</Link>;
   return <button type={type} disabled={disabled} className={cls}>{inner}</button>;
 }
 
 export function TextLink({ href, children, className = "" }: { href: string; children: ReactNode; className?: string }) {
   return (
-    <Link href={href} className={`label group inline-flex items-center gap-2 ${className}`}>
-      <span className="border-b border-current/30 pb-1 transition-colors group-hover:border-current">{children}</span>
-      <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+    <Link href={href} className={`group inline-flex min-h-11 items-center gap-2 text-[16px] font-medium ${className}`}>
+      <span className="underline decoration-current/30 underline-offset-[6px] transition-colors group-hover:decoration-current">{children}</span>
+      <Icon name="arrow-right" className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
     </Link>
   );
 }
