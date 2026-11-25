@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { DepartmentTour } from "@/components/journey/DepartmentTour";
+import { LazyDepartmentTour } from "@/components/journey/LazyDepartmentTour";
 import { CTA } from "@/components/sections/CTA";
 import { Faq } from "@/components/sections/Faq";
 import { PageHero } from "@/components/sections/PageHero";
@@ -83,7 +83,7 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
         </div>
       </section>
 
-      <DepartmentTour slug={s.slug} />
+      <LazyDepartmentTour floor={{ name: f.name, department: d }} index={i} total={floors.length} />
 
       {/* Tasks */}
       <section className="cv bg-paper [--cv:1020px] md:[--cv:700px]">

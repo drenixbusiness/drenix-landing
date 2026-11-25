@@ -1,8 +1,7 @@
 import * as THREE from "three";
 import type { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { GroundedSkybox } from "three/examples/jsm/objects/GroundedSkybox.js";
 import type { Quality } from "./quality";
-import { asArray, clamp01, damp, disposeTree, hull2, lerp, loadTexture } from "./util";
+import { along, clamp01, damp, disposeTree, hull2, lerp, loadReflections, loadTexture, nextFrame, pickTriangles } from "./util";
 
 /**
  * The campus: headquarters tower, fountain court and gardens on a meadow.
@@ -33,8 +32,48 @@ const GROUND_Y = -1.5;
 /** Radius of the opaque part of the lawn around the plinth. */
 const MEADOW = 320;
 
-/** Rough, matte surfaces do not need physically based shading: Lambert looks the same and costs far less. */
-const MATTE = /^(matte|foliage|lawn|hedge|gravel|travertine|sandstone|basalt|temp|Trimsheet)$/;
+/** Radius of the sky, and the part of the panorama the camera can see: cut out of the 8K original, sharp and small. */
+const SKY = 1500;
+const VIEW = {
+  wide: { file: "/hdri/view-wide.webp", u0: 0.755, u1: 1.07 },
+  tall: { file: "/hdri/view-tall.webp", u0: 0.835, u1: 1 },
+};
+const steps = (from: number, to: number, n: number) => Array.from({ length: n }, (_, i) => from + ((to - from) * i) / n);
+/** Rows of the dome, in degrees from the zenith: close together around the horizon, where the flat ground bends up. */
+const HORIZON = [90, 90.15, 90.3, 90.45, 90.63, 90.8, 91, 91.3, 91.7, 92.3, 93];
+const SKY_ROWS = [...steps(0, 90, 12), ...HORIZON, 95, 98, 103, 110, 120, 140, 180];
+const VIEW_ROWS = [...steps(50, 90, 16), ...HORIZON];
+
+/** Rough or self-lit surfaces do not need physically based shading: Lambert looks the same and costs far less. */
+const MATTE = /^(matte|foliage|lawn|hedge|gravel|travertine|sandstone|basalt|temp|Trimsheet|stream|glow|material_0|Interior|Emmsive)$/;
+
+/** Part of a sky dome with a flat ground. The same shape as GroundedSkybox of three.js, with fewer triangles. */
+function dome(u0: number, u1: number, rows: number[], columns: number) {
+  const n = columns + 1, first = rows[0], span = rows[rows.length - 1] - first;
+  const pos = new Float32Array(rows.length * n * 3), uv = new Float32Array(rows.length * n * 2);
+  const index: number[] = [];
+  const y1 = -CAPTURE_H * 1.5;
+  let k = 0;
+  rows.forEach((deg, r) => {
+    const theta = THREE.MathUtils.degToRad(deg);
+    const y = SKY * Math.cos(theta);
+    const f = y >= 0 ? 1 : y < y1 ? -CAPTURE_H / y : 1 - (y * y) / (3 * y1 * y1);
+    for (let c = 0; c < n; c++, k++) {
+      const phi = (u0 + ((u1 - u0) * c) / columns) * Math.PI * 2;
+      pos[k * 3] = -SKY * Math.cos(phi) * Math.sin(theta) * f;
+      pos[k * 3 + 1] = y * f;
+      pos[k * 3 + 2] = -SKY * Math.sin(phi) * Math.sin(theta) * f;
+      uv[k * 2] = c / columns;
+      uv[k * 2 + 1] = 1 - (deg - first) / span;
+      if (r && c) index.push(k - n, k - n - 1, k, k - n - 1, k - 1, k);
+    }
+  });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  g.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  g.setIndex(index);
+  return g;
+}
 
 /** Fog this deep is the same at every distance, so it works as a plain fade. */
 const FOG_SPAN = 1e7;
@@ -66,22 +105,24 @@ export class Exterior {
   private reach = POP_FAR_TOP;
   private sun: THREE.DirectionalLight;
   private fog: THREE.Fog;
-  private sky: GroundedSkybox | null = null;
-  private envRT: THREE.WebGLRenderTarget | null = null;
-  private pmrem: THREE.PMREMGenerator;
+  private sky: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial> | null = null;
+  private view: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial> | null = null;
+  private viewKind: "" | "wide" | "tall" = "";
+  private env: THREE.Texture | null = null;
   private uniforms: Uniforms = { uTime: { value: 0 } };
   private water: THREE.MeshStandardMaterial[] = [];
   private slice = new THREE.Group();
   private gap = new THREE.Group();
   private sliceMats: THREE.Material[] = [];
   /** Facade copies: the whole mesh, and only the triangles of one floor (made when needed). */
-  private facade: { mesh: THREE.Mesh; whole: THREE.BufferGeometry; floors: (THREE.BufferGeometry | undefined)[] }[] = [];
+  private facade: { mesh: THREE.Mesh; whole: THREE.BufferGeometry; ys: Float32Array | null; floors: (THREE.BufferGeometry | undefined)[] }[] = [];
   private facadeFloor = -1;
   private slabs: THREE.Mesh[] = [];
   private deck: THREE.Mesh | null = null;
   private slabFloor = -1;
+  /** Outline of the facade at every height. */
   private wall: Float32Array = new Float32Array(0);
-  private upgrades: ReturnType<typeof setTimeout>[] = [];
+  private outlines: ([number, number][] | undefined)[] = [];
   private disposed = false;
   private box = new THREE.Box3(new THREE.Vector3(TOWER.x0, BAND_FROM, TOWER.z0), new THREE.Vector3(TOWER.x1, BAND_TO, TOWER.z1));
   private hit = new THREE.Vector3();
@@ -104,7 +145,6 @@ export class Exterior {
     this.scene.fog = this.fog;
     this.active = this.lastActive = initial;
     this.bandY = this.floorY(initial);
-    this.pmrem = new THREE.PMREMGenerator(renderer);
 
     this.sun = new THREE.DirectionalLight(0xffe9d0, 3.7);
     this.sun.position.set(-92, 104, 96);
@@ -122,6 +162,11 @@ export class Exterior {
     this.slice.visible = false;
     this.gap.visible = false;
     this.scene.add(this.slice, this.gap);
+  }
+
+  /** A floor is sliding in or out. */
+  get moving() {
+    return Math.abs(this.popV) > 0.01 || Math.abs(this.floorY(this.active) - this.bandY) > 0.01;
   }
 
   get bandH() {
@@ -158,63 +203,73 @@ export class Exterior {
     return i >= 0 && i < this.floors ? i : -1;
   }
 
-  async load(loader: GLTFLoader, onProgress: (f: number) => void) {
-    let a = 0, b = 0;
-    const report = () => onProgress(a * 0.82 + b * 0.18);
-    const pano = loadTexture("/hdri/landscape-2k.webp").then((t) => { b = 1; report(); this.setPanorama(t); }, () => {});
+  async load(loader: GLTFLoader, tall: boolean, onProgress: (f: number) => void) {
+    let a = 0, b = 0, c = 0;
+    const report = () => onProgress(a * 0.8 + b * 0.1 + c * 0.1);
+    const pano = loadTexture("/hdri/landscape-1k.webp").then((t) => { b = 1; report(); this.setPanorama(t); }, () => {});
+    const env = loadReflections("/hdri/env-landscape.webp", 128).then((t) => this.setReflections(t), () => {});
+    const view = this.setView(tall).then(() => { c = 1; report(); });
     const model = loader.loadAsync(this.q.campus, (e) => {
       a = e.total ? clamp01(e.loaded / e.total) : Math.min(0.95, e.loaded / 1.9e6);
       report();
     });
-    const [gltf] = await Promise.all([model, pano]);
+    const [gltf] = await Promise.all([model, pano, view, env]);
+    if (this.disposed) return;
+    await nextFrame();
     if (this.disposed) return;
     this.build(gltf.scene);
     this.loaded = true;
     onProgress(1);
   }
 
-  /** Sharper panoramas, once the scene is on screen. Sending one to the GPU drops a frame or two, so it waits for a calm moment. */
-  upgradePanorama(calm: () => boolean) {
-    const apply = (t: THREE.Texture) => {
-      if (this.disposed) t.dispose();
-      else if (calm()) this.setPanorama(t, false);
-      else this.upgrades.push(setTimeout(() => apply(t), 250));
-    };
-    let wait = this.q.high ? 2500 : 4500;
-    for (const url of this.q.panoramas) {
-      this.upgrades.push(setTimeout(() => {
-        if (this.disposed) return;
-        if (url.includes("8k") && this.renderer.capabilities.maxTextureSize < 8192) return;
-        loadTexture(url).then(apply, () => {});
-      }, wait));
-      wait += 4500;
+  /** The sharp part of the sky. The upright one is smaller; turning a phone sideways loads the wide one. */
+  async setView(tall: boolean) {
+    const kind = tall ? "tall" : "wide";
+    if (this.viewKind === kind || this.viewKind === "wide") return;
+    this.viewKind = kind;
+    const { file, u0, u1 } = VIEW[kind];
+    try {
+      const t = await loadTexture(file);
+      if (this.disposed) return t.dispose();
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.generateMipmaps = false;
+      t.minFilter = THREE.LinearFilter;
+      const old = this.view;
+      this.view = new THREE.Mesh(dome(u0, u1, VIEW_ROWS, tall ? 24 : 46), new THREE.MeshBasicMaterial({ map: t, depthWrite: false }));
+      // Over the soft sky, under the rim of the lawn
+      this.place(this.view, 10.5);
+      if (old) {
+        this.scene.remove(old);
+        disposeTree(old);
+      }
+    } catch {
+      this.viewKind = "";
     }
   }
 
-  private setPanorama(t: THREE.Texture, env = true) {
+  private place(m: THREE.Mesh, order: number) {
+    m.position.y = GROUND_Y + CAPTURE_H - 0.4;
+    m.rotation.y = PANO_ROT;
+    m.frustumCulled = false;
+    // Drawn after the campus, so hidden pixels are skipped
+    m.renderOrder = order;
+    this.scene.add(m);
+  }
+
+  private setReflections(t: THREE.Texture) {
+    if (this.disposed) return t.dispose();
+    this.env = t;
+    this.scene.environment = t;
+    this.scene.environmentRotation.y = PANO_ROT;
+  }
+
+  private setPanorama(t: THREE.Texture) {
     if (this.disposed) return t.dispose();
     t.colorSpace = THREE.SRGBColorSpace;
-    t.mapping = THREE.EquirectangularReflectionMapping;
-    t.anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
-    if (!this.sky) {
-      this.sky = new GroundedSkybox(t, CAPTURE_H, 1500, this.q.high ? 128 : 96);
-      this.sky.position.y = GROUND_Y + CAPTURE_H - 0.4;
-      this.sky.rotation.y = PANO_ROT;
-      // Drawn after the campus, so hidden pixels are skipped
-      this.sky.renderOrder = 10;
-      this.scene.add(this.sky);
-    } else {
-      const m = this.sky.material as THREE.MeshBasicMaterial;
-      m.map?.dispose();
-      m.map = t;
-      m.needsUpdate = true;
-    }
-    if (env) {
-      this.envRT?.dispose();
-      this.envRT = this.pmrem.fromEquirectangular(t);
-      this.scene.environment = this.envRT.texture;
-      this.scene.environmentRotation.y = PANO_ROT;
-    }
+    t.generateMipmaps = false;
+    t.minFilter = THREE.LinearFilter;
+    this.sky = new THREE.Mesh(dome(0, 1, SKY_ROWS, 72), new THREE.MeshBasicMaterial({ map: t, depthWrite: false }));
+    this.place(this.sky, 10);
   }
 
   private build(model: THREE.Object3D) {
@@ -222,9 +277,16 @@ export class Exterior {
     const cheap = (mat: THREE.MeshStandardMaterial) => {
       let next = swapped.get(mat);
       if (!next) {
-        const l = new THREE.MeshLambertMaterial({ name: mat.name, color: mat.color, map: mat.map, vertexColors: mat.vertexColors, side: mat.side });
+        const l = new THREE.MeshLambertMaterial({
+          name: mat.name, color: mat.color, map: mat.map, vertexColors: mat.vertexColors, side: mat.side,
+          emissive: mat.emissive, emissiveMap: mat.emissiveMap, emissiveIntensity: mat.emissiveIntensity,
+          transparent: mat.transparent, opacity: mat.opacity, alphaTest: mat.alphaTest, depthWrite: mat.depthWrite, blending: mat.blending,
+        });
+        // One pass for both sides: thin see-through things look the same and cost half
+        l.forceSinglePass = true;
         if (l.map) l.map.anisotropy = this.q.high ? 8 : 4;
         if (mat.name === "foliage") this.sway(l);
+        if (mat.name === "stream") this.flow(l);
         swapped.set(mat, l);
         next = l;
       }
@@ -241,22 +303,25 @@ export class Exterior {
       const name = (m.material as THREE.Material).name;
       m.castShadow = name !== "water" && name !== "stream" && name !== "Emmsive" && name !== "material_0";
       const mat = m.material as THREE.MeshStandardMaterial;
+      mat.forceSinglePass = true;
+      if (name === "Emmsive") {
+        mat.emissiveIntensity = 1.1;
+        mat.depthWrite = false;
+      } else if (name === "Interior") mat.emissiveIntensity = 0.5;
+      else if (name === "glow") mat.emissiveIntensity = 1.6;
+      else if (name === "stream") {
+        mat.transparent = true;
+        mat.opacity = 0.72;
+      }
       if (MATTE.test(name)) m.material = cheap(mat);
       else if (name === "GLASS_BUILDING") {
         mat.metalness = 0.5; mat.roughness = 0.14; mat.envMapIntensity = 3.1;
         mat.color.setScalar(1.3);
         if (mat.map) mat.map.anisotropy = 8;
-      } else if (name === "Emmsive") {
-        mat.emissiveIntensity = 1.1;
-        mat.depthWrite = false;
-      } else if (name === "Interior") {
-        mat.emissiveIntensity = 0.5;
       } else if (name === "metal") {
         mat.envMapIntensity = 1.15;
         // A touch cooler than the source file, so the bronze does not read as orange in daylight
         mat.color.setRGB(0.93, 1, 1.12);
-      } else if (name === "glow") {
-        mat.emissiveIntensity = 1.6;
       } else if (name === "water") {
         mat.envMapIntensity = 1.3;
         if (mat.normalMap) {
@@ -264,9 +329,6 @@ export class Exterior {
           mat.normalScale.setScalar(0.5);
         }
         this.water.push(mat);
-      } else if (name === "stream") {
-        mat.transparent = true; mat.opacity = 0.72; mat.roughness = 0.1; mat.envMapIntensity = 1.4;
-        this.flow(mat);
       }
       let p: THREE.Object3D | null = m;
       while (p && !p.userData.slice) p = p.parent;
@@ -276,7 +338,6 @@ export class Exterior {
       }
     });
 
-    // Outline of the facade at every height, for the floor slabs
     if (wall) {
       const g = (wall as THREE.Mesh).geometry.getAttribute("position");
       const mw = (wall as THREE.Mesh).matrixWorld;
@@ -301,12 +362,11 @@ export class Exterior {
       copy.castShadow = false;
       copy.receiveShadow = true;
       this.slice.add(copy);
-      this.facade.push({ mesh: copy, whole: copy.geometry, floors: [] });
+      this.facade.push({ mesh: copy, whole: copy.geometry, ys: null, floors: [] });
       const mm = m.material as THREE.Material;
       mm.clippingPlanes = [this.cutTop, this.cutBot];
       mm.clipIntersection = true;
     }
-
 
     const slabMat = new THREE.MeshLambertMaterial({ color: 0x56585b });
     const deckMat = new THREE.MeshLambertMaterial({ color: 0xe9e4dc });
@@ -416,16 +476,27 @@ export class Exterior {
     };
   }
 
-  /** Cross-section of a floor: hull of the facade outline at that height, slightly inset. */
-  private slabGeometry(i: number, inset: number) {
+  /** Outline of a floor, seen from above. */
+  private outline(i: number) {
     const bh = this.bandH, yc = this.floorY(i);
     const pts: [number, number][] = [];
+    const seen = new Set<number>();
     for (let k = 0; k < this.wall.length; k += 3) {
       const y = this.wall[k + 1];
-      if (y > yc - bh / 2 && y < yc + bh / 2) pts.push([this.wall[k], this.wall[k + 2]]);
+      if (y <= yc - bh / 2 || y >= yc + bh / 2) continue;
+      // Points above one another count once
+      const x = this.wall[k], z = this.wall[k + 2], key = Math.round(x * 20) * 4096 + Math.round(z * 20);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      pts.push([x, z]);
     }
-    let h = pts.length >= 3 ? hull2(pts) : [];
-    if (h.length < 3) h = [[TOWER.x0, TOWER.z0], [TOWER.x1, TOWER.z0], [TOWER.x1, TOWER.z1], [TOWER.x0, TOWER.z1]];
+    const h = pts.length >= 3 ? hull2(pts) : [];
+    return h.length >= 3 ? h : ([[TOWER.x0, TOWER.z0], [TOWER.x1, TOWER.z0], [TOWER.x1, TOWER.z1], [TOWER.x0, TOWER.z1]] as [number, number][]);
+  }
+
+  /** Cross-section of a floor: its outline, slightly inset. */
+  private slabGeometry(i: number, inset: number) {
+    const h = (this.outlines[i] ??= this.outline(i));
     const shape = new THREE.Shape(h.map(([x, z]) => new THREE.Vector2(CENTER.x + (x - CENTER.x) * inset, CENTER.z + (z - CENTER.z) * inset)));
     const g = new THREE.ExtrudeGeometry(shape, { depth: 0.4, bevelEnabled: false, curveSegments: 1 });
     // The shape lies in XY (y = z): turn it into the ground plane
@@ -451,28 +522,16 @@ export class Exterior {
   private showFacade(i: number) {
     if (i === this.facadeFloor) return;
     this.facadeFloor = i;
-    for (const f of this.facade) f.mesh.geometry = i < 0 ? f.whole : (f.floors[i] ??= this.floorGeometry(f.mesh, f.whole, i));
+    for (const f of this.facade) f.mesh.geometry = i < 0 ? f.whole : (f.floors[i] ??= this.floorGeometry(f, i));
   }
 
-  private floorGeometry(mesh: THREE.Mesh, whole: THREE.BufferGeometry, i: number) {
-    const pos = whole.getAttribute("position");
-    const src = whole.index;
+  private floorGeometry(f: Exterior["facade"][number], i: number) {
     const top = this.floorY(i) + this.bandH / 2 + 0.05, bot = this.floorY(i) - this.bandH / 2 - 0.05;
-    mesh.updateMatrix();
-    const e = mesh.matrix.elements;
-    const ys = new Float32Array(pos.count);
-    for (let k = 0; k < pos.count; k++) ys[k] = e[1] * pos.getX(k) + e[5] * pos.getY(k) + e[9] * pos.getZ(k) + e[13];
-    const n = src ? src.count : pos.count;
-    const list: number[] = [];
-    for (let k = 0; k < n; k += 3) {
-      const a = src ? src.getX(k) : k, b = src ? src.getX(k + 1) : k + 1, c = src ? src.getX(k + 2) : k + 2;
-      if (Math.max(ys[a], ys[b], ys[c]) > bot && Math.min(ys[a], ys[b], ys[c]) < top) list.push(a, b, c);
-    }
-    const g = new THREE.BufferGeometry();
-    for (const [name, attr] of Object.entries(whole.attributes)) g.setAttribute(name, attr);
-    g.setIndex(list);
-    g.boundingSphere = whole.boundingSphere;
-    return g;
+    f.mesh.updateMatrix();
+    const ys = (f.ys ??= along(f.whole, f.mesh.matrix, 1));
+    const beyond = new Uint8Array(ys.length);
+    for (let k = 0; k < ys.length; k++) beyond[k] = (ys[k] <= bot ? 1 : 0) | (ys[k] >= top ? 2 : 0);
+    return pickTriangles(f.whole, beyond);
   }
 
   private setBand(y: number, open: number, gone: number) {
@@ -530,12 +589,9 @@ export class Exterior {
 
   dispose() {
     this.disposed = true;
-    this.upgrades.forEach(clearTimeout);
-    this.envRT?.dispose();
-    this.pmrem.dispose();
+    this.env?.dispose();
     this.sliceMats.forEach((m) => m.dispose());
     this.sun.shadow.map?.dispose();
-    for (const m of asArray(this.sky?.material ?? [])) m.dispose();
     for (const f of this.facade) [f.whole, ...f.floors].forEach((g) => g?.dispose());
     disposeTree(this.scene);
   }

@@ -2,9 +2,10 @@
 
 import { useState, type ReactNode } from "react";
 import { Icon } from "@/components/ui/Icon";
-import { services } from "@/lib/data";
 import { site } from "@/lib/site";
-import { ErrorSummary, Field, Honeypot, TextArea } from "./Field";
+import { ErrorSummary } from "./ErrorSummary";
+import { Field, Honeypot } from "./Field";
+import { TextArea } from "./TextArea";
 import { useContactForm } from "./useContactForm";
 
 const budgets = ["Under $1,000", "$1,000–5,000", "$5,000–15,000", "Over $15,000", "Not sure yet"];
@@ -23,10 +24,8 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
   );
 }
 
-export function ContactForm({ initialService }: { initialService?: string }) {
-  const startupSlug = services.find((s) => s.mock === "pitch")?.slug;
-  const init = initialService === "startup" ? startupSlug : initialService;
-  const [selected, setSelected] = useState<string[]>(init && services.some((s) => s.slug === init) ? [init] : []);
+export function ContactForm({ services, initial }: { services: { slug: string; title: string }[]; initial?: string }) {
+  const [selected, setSelected] = useState<string[]>(initial && services.some((s) => s.slug === initial) ? [initial] : []);
   const [budget, setBudget] = useState("");
   const { errors, summary, status, onSubmit, onBlur, summaryRef, doneRef } = useContactForm(["name", "phone", "email"], (fd) => ({
     company: fd.get("company"),

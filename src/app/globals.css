@@ -3,6 +3,31 @@
 
 /* Phones held sideways: panels move to the left half */
 @custom-variant short (@media (max-height: 539px) and (orientation: landscape) and (max-width: 1023px));
+/* Buttons of the tours */
+@utility btn-solid {
+  @apply inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full bg-graphite px-[clamp(12px,4vw,20px)] text-[15px] font-medium text-white transition-colors hover:bg-ember-deep;
+}
+@utility btn-ghost {
+  @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-graphite/25 bg-white/80 px-[clamp(12px,4vw,20px)] text-[15px] font-medium text-graphite transition-colors hover:border-graphite hover:bg-white desk:bg-white/60 desk:backdrop-blur-md;
+}
+@utility btn-text {
+  @apply inline-flex min-h-11 items-center gap-2 text-[15px] font-medium underline decoration-graphite/30 underline-offset-4 hover:decoration-graphite;
+}
+@utility btn-round {
+  @apply grid size-11 shrink-0 place-items-center rounded-full border border-graphite/20 bg-white/70 text-graphite transition-colors hover:border-graphite hover:bg-graphite hover:text-white;
+}
+
+/* Tours: panels beside the model, or above and below it on phones and on tablets held upright */
+@custom-variant desk (@media (min-width: 1024px) and (min-aspect-ratio: 1/1));
+@custom-variant roomy (@media (min-width: 1280px) and (min-aspect-ratio: 1/1));
+@custom-variant stack (@media not all and (min-width: 1024px) and (min-aspect-ratio: 1/1));
+@custom-variant flat (@media (max-height: 379px) and (orientation: landscape) and (max-width: 1023px));
+/* Inside a tour: low laptop screens (squat), and phones held upright, whose screen between the browser bars is not tall.
+   Measured on the tour, not on the window, so nothing changes size while the bars slide away. */
+@custom-variant squat (@container tour (max-height: 699px) and (min-width: 1024px));
+@custom-variant snug (@container tour (max-height: 809px) and (max-width: 1023px) and (orientation: portrait));
+@custom-variant low (@container tour (max-height: 739px) and (max-width: 1023px) and (orientation: portrait));
+@custom-variant tiny (@container tour (max-height: 599px) and (max-width: 1023px) and (orientation: portrait));
 
 @theme {
   /* AURUM uslubidagi yorug‘, "tosh va qog‘oz" palitrasi + logodagi to‘q sariq aksent */
@@ -70,6 +95,48 @@ label {
 .cv {
   content-visibility: auto;
   contain-intrinsic-block-size: auto var(--cv, 900px);
+}
+
+/* Mockups: drawn --w wide, scaled to the container. tan(atan2()) turns two lengths into a plain number. */
+.scaled {
+  container-type: inline-size;
+}
+.scaled > * {
+  scale: tan(atan2(100cqw, var(--w)));
+}
+
+/* Inner page heroes on phones: the veil over the picture is as tall as the text on it */
+@media (max-width: 1023px) and (orientation: portrait) {
+  .page-veil {
+    position: relative;
+  }
+  .page-veil::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -110px -100vw -100px;
+    background: linear-gradient(rgb(239 237 232 / 0.97) 0, rgb(239 237 232 / 0.9) calc(100% - 190px), rgb(239 237 232 / 0.62) calc(100% - 100px), rgb(239 237 232 / 0) 100%);
+  }
+}
+
+/* The screen of a tour: the panels in it adapt to its size (see snug, low and tiny above) */
+.tour-box {
+  /* Where the column of the page starts */
+  --edge: max(0px, 50vw - 740px);
+  container: tour / size;
+}
+
+/* Light behind the text of the tour. It follows the column of text, so it also reaches it on very wide screens. */
+.side-light {
+  background: linear-gradient(to right, rgb(239 237 232 / 0.85) var(--edge), rgb(239 237 232 / 0.45) calc(var(--edge) + 390px), rgb(239 237 232 / 0) calc(var(--edge) + 840px));
+}
+
+/* Panels of the 3D tour that are not on screen: no layout until the scene runs, then ready in advance */
+.layer-off {
+  content-visibility: hidden;
+}
+.layer-off[data-warm] {
+  content-visibility: visible;
 }
 
 /* First stop for the keyboard: jump over the header and the 3D tour */
@@ -141,44 +208,30 @@ body {
   }
 }
 
-/* AURUM paneli: qorong‘i shisha */
-.panel-dark {
-  background: rgb(14 14 16 / 0.62);
-  border: 1px solid rgb(255 255 255 / 0.12);
-  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.55);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
-}
-
-/* AURUM interyer kartasi: oq shisha */
+/* White card over pictures and the 3D scene. Glass only on computers with power to spare: on a phone the
+   blur behind it would be redrawn in every frame. */
 .panel-light {
-  background: rgb(250 249 247 / 0.86);
+  background: rgb(250 249 247 / 0.94);
   border: 1px solid rgb(255 255 255 / 0.7);
   box-shadow: 0 24px 60px -24px rgb(20 20 20 / 0.35);
-  backdrop-filter: blur(22px) saturate(140%);
-  -webkit-backdrop-filter: blur(22px) saturate(140%);
 }
-
-/* Eski nomlar — mos ravishda */
-.glass,
-.glass-warm {
-  background: rgb(255 255 255 / 0.12);
-  border: 1px solid rgb(255 255 255 / 0.22);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.2), 0 30px 70px -30px rgb(0 0 0 / 0.5);
-  backdrop-filter: blur(24px) saturate(150%);
-  -webkit-backdrop-filter: blur(24px) saturate(150%);
+@media (min-width: 1024px) and (pointer: fine) {
+  .panel-light {
+    background: rgb(250 249 247 / 0.86);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+  }
+}
+/* Device tiers, set on <html> by SmoothScroll */
+[data-tier="mid"] .panel-light,
+[data-tier="low"] .panel-light {
+  background: rgb(250 249 247 / 0.94);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 details > summary::-webkit-details-marker {
   display: none;
-}
-
-@keyframes kenburns {
-  from { transform: scale(1.02); }
-  to { transform: scale(1.1); }
-}
-.kenburns {
-  animation: kenburns 26s ease-out both alternate infinite;
 }
 
 /* Hero entrance in pure CSS: starts with the first paint, no wait for JS/hydration */
@@ -194,10 +247,56 @@ details > summary::-webkit-details-marker {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-.hero-rise { animation: hero-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hero-rise { animation: hero-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
 /* Body copy only slides (no fade), so it counts as painted immediately */
-.hero-up { animation: hero-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
-.hero-in { animation: hero-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hero-up { animation: hero-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.hero-in { animation: hero-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Parts of the tour that follow the scroll directly. The browser moves them off the main thread, so they stay
+   smooth while the 3D scene loads. Elsewhere (and on iOS) the page script does it. --total: length of the tour. */
+.tour-hero {
+  --shift: -20px;
+}
+@media (min-width: 1024px) {
+  .tour-hero {
+    --shift: -60px;
+  }
+}
+@keyframes tour-hero {
+  to { translate: 0 var(--shift); }
+}
+@keyframes tour-zoom {
+  to { scale: 1.5; }
+}
+@keyframes tour-bar {
+  from { scale: 0 1; }
+  to { scale: 1 1; }
+}
+@supports (animation-timeline: view()) and (not (-webkit-touch-callout: none)) {
+  .tour {
+    view-timeline-name: --tour;
+  }
+  .tour-hero,
+  .tour-zoom,
+  .tour-bar {
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-timeline: --tour;
+    animation-range: contain 0% contain 100%;
+  }
+  .tour-hero {
+    animation-name: tour-hero;
+    animation-range-end: contain calc(80% / var(--total));
+  }
+  .tour-zoom {
+    animation-name: tour-zoom;
+    animation-range-start: contain calc(30% / var(--total));
+    animation-range-end: contain calc(240% / var(--total));
+  }
+  .tour-bar {
+    animation-name: tour-bar;
+  }
+}
 
 /* Entrance on scroll. RevealObserver sets data-in once the element is on screen. */
 .reveal {
@@ -240,24 +339,4 @@ body::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
-}
-
-/* Device tiers (set on <html> by SmoothScroll): lighter glass and no endless zoom on weaker hardware */
-[data-tier="mid"] .panel-dark,
-[data-tier="mid"] .panel-light {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-[data-tier="low"] .panel-dark {
-  background: rgb(14 14 16 / 0.86);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-[data-tier="low"] .panel-light {
-  background: rgb(250 249 247 / 0.96);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-[data-tier="low"] .kenburns {
-  animation: none;
 }

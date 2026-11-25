@@ -1,17 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, type FocusEvent, type FormEvent } from "react";
+import { rules, type FieldName } from "./rules";
+import { sendRequest } from "./sendRequest";
 
 export type FormStatus = "idle" | "sending" | "done" | "error";
-export type FieldName = "name" | "phone" | "email";
-
-const rules: Record<FieldName, (v: string) => string | null> = {
-  name: (v) => (v.trim().length >= 2 ? null : "Enter your name"),
-  phone: (v) => (v.replace(/\D/g, "").length >= 7 ? null : "Enter a phone number with the code, for example +998 90 123 45 67"),
-  email: (v) => (!v.trim() || /^\S+@\S+\.\S{2,}$/.test(v.trim()) ? null : "Check the email address, for example name@company.com"),
-};
-
-export const fieldLabels: Record<FieldName, string> = { name: "Your name", phone: "Phone", email: "Email" };
 
 /**
  * Validation and sending shared by the contact form and the short meeting form.
@@ -64,17 +57,7 @@ export function useContactForm(fields: FieldName[], payload: (fd: FormData) => R
       return;
     }
     setStatus("sending");
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: fd.get("name"), phone: fd.get("phone"), email: fd.get("email"), website: fd.get("website"), ...payload(fd) }),
-        signal: AbortSignal.timeout(15000),
-      });
-      setStatus(res.ok ? "done" : "error");
-    } catch {
-      setStatus("error");
-    }
+    setStatus((await sendRequest(fd, payload(fd))) ? "done" : "error");
   }
 
   return { errors, summary, status, onSubmit, onBlur, summaryRef, doneRef };

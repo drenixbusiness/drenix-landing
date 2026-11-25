@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { canRender3D, type Tier } from "@/lib/perf";
+import type { Tier } from "@/lib/perf";
+import { loadEngine } from "./loadEngine";
 import type { Journey, JourneyEvents, JourneyOptions } from "./scene/engine";
 
 export type JourneyStatus = "idle" | "loading" | "ready" | "failed";
@@ -46,16 +47,14 @@ export function useJourney({ enabled, tier, floors, floor, mode = "full", insets
     let dead = false;
     let engine: Journey | null = null;
     let shown = 0;
-    // A software renderer would stutter: the pictures take over, and the engine is not even downloaded
-    const engineFile = canRender3D() ? import("./scene/engine") : Promise.reject(new Error("WebGL 2 is not available"));
-    void engineFile.then(({ Journey }) => {
+    void loadEngine().then(({ Journey }) => {
       const mount = mountRef.current;
       if (dead || !mount) return;
       setStatus("loading");
       try {
         engine = new Journey(
           mount,
-          { tier, floors, floor: live.current.floor, mode, insets: (w, h) => live.current.insets?.(w, h) ?? { tower: ZERO, plan: ZERO, zone: ZERO } },
+          { tier, floors, floor: live.current.floor, mode, insets: (w, h) => live.current.insets?.(w, h) ?? { tower: ZERO, plan: ZERO, zone: ZERO, done: ZERO } },
           {
             onProgress: (f) => {
               // Enough for a percentage label; not a render per network packet

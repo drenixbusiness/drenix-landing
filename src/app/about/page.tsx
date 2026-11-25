@@ -33,7 +33,7 @@ export default function AboutPage() {
       <section className="cv bg-paper [--cv:600px]">
         <div className="container-x grid items-center gap-12 py-20 md:py-28 lg:grid-cols-12">
           <Reveal className="lg:col-span-5">
-            <Image src="/brand/drenix-logo.png" alt="DRENIX logo: a phoenix with open wings" width={900} height={655} sizes="(min-width: 1024px) 32vw, 70vw" className="mx-auto h-auto w-[72%]" />
+            <Image src="/brand/drenix-logo.png" alt="DRENIX logo: a phoenix with open wings" width={900} height={817} sizes="(min-width: 1480px) 400px, (min-width: 1024px) 26.6vw, calc(72vw - 29px)" className="mx-auto h-auto w-[72%]" />
           </Reveal>
           <p className="text-[21px] leading-[1.5] md:text-[26px] lg:col-span-6 lg:col-start-7">
             The phoenix is the bird that renews itself and comes back stronger. We help companies renew themselves the same way: we replace outdated processes with digital tools and speed up growth.

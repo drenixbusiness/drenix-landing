@@ -32,7 +32,8 @@ npm run build && npm start
 
 `src/components/journey/`
 
-- `HomeJourney.tsx` — bosh sahifadagi sayohat, `DepartmentTour.tsx` — bo‘lim sahifasidagi sayohat.
+- `HomeJourney.tsx` — bosh sahifadagi sayohatning birinchi ekrani, `HomePanels.tsx` — undan keyingi panellar (foydalanuvchi harakat qilganda qo‘shiladi), `DepartmentTour.tsx` — bo‘lim sahifasidagi sayohat.
+- `parts.tsx` — birinchi ekran qismlari, `panels.tsx` va `rooms.tsx` — keyin yuklanadigan panellar, `layout.ts` — model uchun bo‘sh joy (telefonda panellar o‘lchanadi).
 - `JourneyStatic.tsx`, `RoomGrid.tsx` — 3D’siz versiya: kuchsiz qurilma, sekin internet, WebGL yo‘q yoki foydalanuvchi harakatni kamaytirgan bo‘lsa.
 - `scene/timeline.ts` — scroll bosqichlari, `scene/exterior.ts` — kampus va ochiladigan qavat, `scene/office.ts` — ofis va xonalar, `scene/engine.ts` — hammasini boshqaradi, `scene/quality.ts` — sifatni qurilmaga moslaydi.
 
@@ -47,7 +48,24 @@ npm run build && npm start
 | `public/media/open-floor-XX*` | Har bir qavatning ochiq holati (keng, telefon, kartochka) |
 | `public/media/rooms-*` | Ofis rejasi va xonalar |
 
+| `public/hdri/view-wide.webp`, `view-tall.webp` | Osmonning kamera ko‘radigan qismi (8K dan qirqilgan), `landscape-1k.webp` — qolgan qismi |
+| `public/hdri/env-*.webp` | Shisha va metalldagi aks: three.js PMREM natijasi, oldindan tayyorlangan (`loadReflections`, `scene/util.ts`) |
+
+Osmon rasmi almashtirilsa: `node scripts/panorama.mjs`, so‘ng `env-landscape.webp` ni yangi rasmdan PMREMGenerator bilan qayta tayyorlang.
+
 Rasm almashtirilsa, unga yangi nom bering: optimallashtirilgan rasmlar 30 kun keshda turadi.
+
+## Qurilmalarga moslashuv
+
+Sayohat panellari ekran o‘lchamiga o‘zi moslashadi (`src/app/globals.css` boshidagi variantlar): `desk` / `roomy` — panel model yonida, `stack` — panel model ustida va ostida, `squat` — past noutbuk ekrani, `snug` / `low` / `tiny` — tik ushlangan telefon (brauzer panellari orasidagi balandlik bo‘yicha), `short` / `flat` — yotiq ushlangan telefon.
+
+## Tezlik
+
+- CSS sahifa ichida keladi (`experimental.inlineCss`): birinchi chizish ikkinchi so‘rovni kutmaydi.
+- `src/lib/polyfills.js` — Next’ning eski brauzerlar uchun zaxira kodlari o‘rniga (`turbopack.resolveAlias`).
+- `scripts/trim-react-dom.cjs` — React DOM’ning bu saytda ishlatilmaydigan qismlari build paytida olib tashlanadi. Faqat fayl aynan tekshirilgan nusxa bo‘lsa ishlaydi: Next yangilansa, qadam hech narsa qilmaydi va buildda eslatma chiqadi. Skript o‘zgartirilsa, `next.config.ts` dagi `edition` raqamini oshiring.
+- Formalar va bo‘lim sayohati alohida fayllarda (`Lazy*.tsx`), shuning uchun boshqa sahifaga havola ularni yuklamaydi.
+- 3D sahna kichik bo‘laklarda tayyorlanadi: avval teksturalar, keyin shaderlar, keyin har bir qism bitta pikselga chiziladi (`prepare`, `warmSteps`). Telefonda tinch turgan kampus yarim kadrda chiziladi.
 
 ## Aloqa formasi → Telegram
 

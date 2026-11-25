@@ -1,10 +1,9 @@
 import * as THREE from "three";
 import type { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { RoomEnvironment } from "three/examples/jsm/environments/RoomEnvironment.js";
 import type { ZoneId } from "@/lib/departments";
 import type { Quality } from "./quality";
 import { drawScreens } from "./screens";
-import { clamp01, damp, disposeTree, lerp, type Box } from "./util";
+import { along, clamp01, damp, disposeTree, lerp, loadReflections, pickTriangles, type Box } from "./util";
 
 /**
  * The office inside a floor, as an architect's model.
@@ -74,6 +73,8 @@ type Part = {
   front: THREE.Mesh;
   inner: THREE.Mesh | null;
   whole: THREE.BufferGeometry;
+  /** Vertices in plan: x and z. */
+  xz: [Float32Array, Float32Array] | null;
   /** Only the triangles of one room, made when needed. */
   rooms: (THREE.BufferGeometry | undefined)[];
 };
@@ -105,7 +106,7 @@ export class Office {
   private grow = new THREE.Group();
   private roomGrow = new THREE.Group();
   private sun: THREE.DirectionalLight;
-  private envRT: THREE.WebGLRenderTarget;
+  private env: THREE.Texture | null = null;
   private maq = new THREE.Color(0xdedad3);
   private uMain: Uni = { uTint: { value: 0 }, uMaq: { value: this.maq } };
   private uRoom: Uni = { uTint: { value: 1 }, uMaq: { value: this.maq } };
@@ -130,12 +131,9 @@ export class Office {
   private last = { grow: -1, lift: -1, zone: -2 };
   private disposed = false;
 
-  constructor(private renderer: THREE.WebGLRenderer, private q: Quality, department: number) {
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    this.envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
-    pmrem.dispose();
-    this.scene.environment = this.envRT.texture;
-    this.scene.environmentIntensity = 0.42;
+  constructor(q: Quality, department: number) {
+    // The picture of the studio light holds a quarter of its brightness
+    this.scene.environmentIntensity = 0.42 * 4;
 
     this.sun = new THREE.DirectionalLight(0xfff1e0, 2.7);
     this.sun.position.set(-11, 22, 13);
@@ -187,8 +185,14 @@ export class Office {
   }
 
   async load(loader: GLTFLoader) {
+    const env = loadReflections("/hdri/env-studio.webp", 64).catch(() => null);
     const gltf = await loader.loadAsync("/models/office-hq.glb");
-    if (this.disposed) return;
+    this.env = await env;
+    if (this.disposed) {
+      this.env?.dispose();
+      return;
+    }
+    this.scene.environment = this.env;
     gltf.scene.traverse((o) => {
       const m = o as THREE.Mesh;
       if (!m.isMesh) return;
@@ -223,7 +227,7 @@ export class Office {
         inner.matrix.copy(m.matrixWorld);
         this.roomGrow.add(inner);
       }
-      this.parts.push({ front, inner, whole: m.geometry, rooms: [] });
+      this.parts.push({ front, inner, whole: m.geometry, xz: null, rooms: [] });
     });
     this.loaded = true;
     this.shadowDirty = true;
@@ -242,41 +246,32 @@ export class Office {
     return mat;
   }
 
-  /** Prepares the rooms one after another while nothing else happens. */
-  private prepare(zone: number) {
-    if (zone >= ZONES.length) return;
+  /** Prepares the rooms in small pieces while nothing else happens. */
+  private prepare(step: number) {
+    const n = this.parts.length;
+    if (step >= (ZONES.length + 1) * n) return;
     this.prep = setTimeout(() => {
       if (this.disposed) return;
-      for (const p of this.parts) p.rooms[zone] ??= this.roomGeometry(p, zone);
-      this.prepare(zone + 1);
-    }, 150);
+      const p = this.parts[step % n], zone = Math.floor(step / n) - 1;
+      if (zone < 0) this.planOf(p);
+      else p.rooms[zone] ??= this.roomGeometry(p, zone);
+      this.prepare(step + 1);
+    }, 24);
   }
 
-  private roomGeometry({ front, whole }: Part, zone: number) {
+  private planOf(p: Part) {
+    return (p.xz ??= [along(p.whole, p.front.matrix, 0), along(p.whole, p.front.matrix, 2)]);
+  }
+
+  private roomGeometry(p: Part, zone: number) {
     const [x0, x1, z0, z1] = ZONES[zone].box;
-    const pos = whole.getAttribute("position");
-    const v = new THREE.Vector3();
-    const xs = new Float32Array(pos.count), zs = new Float32Array(pos.count);
-    for (let k = 0; k < pos.count; k++) {
-      v.fromBufferAttribute(pos, k).applyMatrix4(front.matrix);
-      xs[k] = v.x;
-      zs[k] = v.z;
+    const [xs, zs] = this.planOf(p);
+    const beyond = new Uint8Array(xs.length);
+    for (let k = 0; k < xs.length; k++) {
+      const x = xs[k], z = zs[k];
+      beyond[k] = (x < x0 ? 1 : 0) | (x > x1 ? 2 : 0) | (z < z0 ? 4 : 0) | (z > z1 ? 8 : 0);
     }
-    const src = whole.index;
-    const n = src ? src.count : pos.count;
-    const list: number[] = [];
-    for (let k = 0; k < n; k += 3) {
-      const a = src ? src.getX(k) : k, b = src ? src.getX(k + 1) : k + 1, c = src ? src.getX(k + 2) : k + 2;
-      if (Math.max(xs[a], xs[b], xs[c]) < x0 || Math.min(xs[a], xs[b], xs[c]) > x1) continue;
-      if (Math.max(zs[a], zs[b], zs[c]) < z0 || Math.min(zs[a], zs[b], zs[c]) > z1) continue;
-      list.push(a, b, c);
-    }
-    const g = new THREE.BufferGeometry();
-    for (const [key, attr] of Object.entries(whole.attributes)) g.setAttribute(key, attr);
-    g.setIndex(list);
-    g.boundingSphere = whole.boundingSphere;
-    g.boundingBox = whole.boundingBox;
-    return g;
+    return pickTriangles(p.whole, beyond);
   }
 
   private material(src: THREE.MeshStandardMaterial, u: Uni): THREE.Material {
@@ -287,7 +282,7 @@ export class Office {
       return mat;
     }
     if (src.name === "glass") {
-      const mat = new THREE.MeshStandardMaterial({ name: "glass", vertexColors: true, transparent: true, roughness: 0.08, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false });
+      const mat = new THREE.MeshStandardMaterial({ name: "glass", vertexColors: true, transparent: true, roughness: 0.08, metalness: 0.1, side: THREE.DoubleSide, depthWrite: false, forceSinglePass: true });
       this.patch(mat, u);
       return mat;
     }
@@ -296,7 +291,7 @@ export class Office {
       this.patch(mat, u);
       return mat;
     }
-    const mat = new THREE.MeshLambertMaterial({ name: src.name, color: src.color, map: src.map, vertexColors: src.vertexColors, side: THREE.DoubleSide, transparent: src.name === "logo" });
+    const mat = new THREE.MeshLambertMaterial({ name: src.name, color: src.color, map: src.map, vertexColors: src.vertexColors, side: src.name === "logo" ? THREE.FrontSide : THREE.DoubleSide, transparent: src.name === "logo" });
     if (mat.map) mat.map.anisotropy = 4;
     this.patch(mat, u);
     return mat;
@@ -369,6 +364,26 @@ export class Office {
     }
   }
 
+  /** Draws the parts one by one into a single pixel, so the first real frame has nothing left to prepare. */
+  warmSteps(): (() => void)[] {
+    const all = [...this.grow.children, ...this.roomGrow.children];
+    const show = (only: THREE.Object3D | null) => {
+      for (const o of all) o.visible = !only || o === only;
+    };
+    return [
+      () => {
+        this.update(0, { grow: 1, tint: 1, zone: 0, lift: 0.5, direct: true });
+        show(all[0]);
+      },
+      ...all.slice(1).map((o) => () => show(o)),
+      () => show(null),
+      () => {
+        this.update(0, { grow: 0, tint: 0, zone: -1, lift: 0, direct: true });
+        this.shadowDirty = true;
+      },
+    ];
+  }
+
   update(dt: number, s: OfficeState) {
     if (!this.loaded) return;
     this.liftS = s.direct ? s.lift : damp(this.liftS, s.lift, 14, dt);
@@ -416,7 +431,7 @@ export class Office {
     this.disposed = true;
     clearTimeout(this.prep);
     for (const p of this.parts) [p.whole, ...p.rooms].forEach((g) => g?.dispose());
-    this.envRT.dispose();
+    this.env?.dispose();
     this.screenTex.dispose();
     this.sun.shadow.map?.dispose();
     this.mats.forEach((m) => m.dispose());

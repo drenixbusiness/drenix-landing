@@ -7,7 +7,7 @@ type Variant = "primary" | "light" | "glass" | "outline";
 const variants: Record<Variant, string> = {
   primary: "bg-graphite text-white hover:bg-ember-deep",
   light: "bg-white text-graphite hover:bg-stone-2",
-  glass: "border border-graphite/25 bg-white/60 text-graphite backdrop-blur-md hover:border-graphite hover:bg-white",
+  glass: "border border-graphite/25 bg-white/80 text-graphite hover:border-graphite hover:bg-white lg:bg-white/60 lg:backdrop-blur-md",
   outline: "border border-current/45 hover:border-current hover:bg-current/10",
 };
 
@@ -24,7 +24,7 @@ type Props = {
 
 /** Pill button, 48 px high, with an arrow. */
 export function Button({ href, children, variant = "primary", className = "", type = "button", disabled, external, icon = "arrow-right" }: Props) {
-  const cls = `group inline-flex min-h-12 items-center justify-center gap-3 rounded-full px-5 text-[15px] font-medium transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`;
+  const cls = `group inline-flex min-h-12 items-center justify-center gap-2.5 rounded-full px-[clamp(14px,4vw,20px)] text-[15px] font-medium transition-colors duration-300 disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`;
   const inner = (
     <>
       <span>{children}</span>

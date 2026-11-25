@@ -38,4 +38,8 @@ export const floors = services.map((s, i) => {
 
 export type Floor = (typeof floors)[number];
 
+/** What the browser needs to know about every floor before one is opened. Server components pass it down. */
+export type FloorInfo = Pick<Floor, "level" | "slug" | "name" | "title" | "lead" | "specs">;
+export const floorInfo: FloorInfo[] = floors.map(({ level, slug, name, title, lead, specs }) => ({ level, slug, name, title, lead, specs }));
+
 export const floorIndex = (slug: string) => floors.findIndex((f) => f.slug === slug);

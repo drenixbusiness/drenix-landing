@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { ArtPicture } from "@/components/ui/ArtPicture";
 import { Lines } from "@/components/ui/Reveal";
+import { services as allServices } from "@/lib/data";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -10,9 +11,12 @@ export const metadata: Metadata = {
   description: "Get in touch with DRENIX: free consultation, reply within 24 hours.",
 };
 
+const services = allServices.map(({ slug, title }) => ({ slug, title }));
+const startup = allServices.find((s) => s.mock === "pitch")?.slug;
+
 async function FormWithParams({ searchParams }: { searchParams: PageProps<"/contact">["searchParams"] }) {
-  const sp = await searchParams;
-  return <ContactForm initialService={typeof sp.service === "string" ? sp.service : undefined} />;
+  const { service } = await searchParams;
+  return <ContactForm services={services} initial={service === "startup" ? startup : typeof service === "string" ? service : undefined} />;
 }
 
 export default function ContactPage(props: PageProps<"/contact">) {
@@ -45,7 +49,7 @@ export default function ContactPage(props: PageProps<"/contact">) {
         </div>
 
         <div className="hero-in lg:col-span-7" style={{ animationDelay: "0.1s" }}>
-          <Suspense fallback={<ContactForm />}>
+          <Suspense fallback={<ContactForm services={services} />}>
             <FormWithParams searchParams={props.searchParams} />
           </Suspense>
         </div>

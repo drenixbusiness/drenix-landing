@@ -10,7 +10,7 @@ export function LaunchpadBand() {
     <section className="cv relative overflow-hidden bg-stone text-graphite [--cv:1290px] md:[--cv:100svh]">
       <ArtPicture wide="/media/hero-startups.webp" tall="/media/hero-startups-tall.webp" />
       <div className="pointer-events-none absolute inset-0" aria-hidden>
-        <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-stone/95 via-stone/70 to-transparent lg:w-[70%]" />
+        <div className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-stone/95 via-stone/85 to-stone/45 lg:w-[70%] lg:via-stone/70 lg:to-transparent" />
         <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-stone to-transparent" />
       </div>
 

@@ -45,7 +45,7 @@ export default function ServicesPage() {
                         <span className="grid size-11 place-items-center rounded-full bg-ember/15 text-ember-text"><Icon name={departmentIcon[s.slug]} className="size-5" /></span>
                         <span className="text-[17px] font-semibold">{f.name}</span>
                       </p>
-                      <h2 className="wide mt-5 text-[24px] leading-[1.15] transition-colors group-hover:text-ember-text md:text-[28px]">{s.title}</h2>
+                      <h2 className="wide mt-5 text-[24px] leading-[1.15] transition-colors group-hover:text-ember-text lg:text-[28px]">{s.title}</h2>
                       <p className="mt-4 max-w-md text-[18px] leading-relaxed text-smoke">{s.summary}</p>
                       <p className="mt-5 flex items-center gap-2 text-[16px] text-smoke"><Icon name="clock" className="size-5" />{s.timeline}</p>
                       <span className="mt-5 inline-flex min-h-11 items-center gap-3 text-[16px] font-medium">

@@ -60,12 +60,6 @@ export function canRender3D() {
   return gpu !== "none" && gpu !== "weak";
 }
 
-/** Fast network, plenty of memory and a discrete GPU: worth fetching the 8K panorama. */
-export function canFetchHuge() {
-  const nav = navigator as NavExtras;
-  return getTier() === "high" && getGpu() === "discrete" && (nav.deviceMemory ?? 8) >= 8 && (nav.connection?.effectiveType ?? "4g") === "4g";
-}
-
 /* ---------- Reduced motion, as an external store for React ---------- */
 
 const REDUCED = "(prefers-reduced-motion: reduce)";

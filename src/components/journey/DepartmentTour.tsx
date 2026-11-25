@@ -1,15 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useLenis } from "lenis/react";
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Icon, zoneIcon } from "@/components/ui/Icon";
 import { getTier, prefersReducedMotion, subscribeReducedMotion, type Tier } from "@/lib/perf";
-import { floorIndex, floors } from "@/lib/tower";
+import { scrollPageTo } from "@/lib/smoothScroll";
+import type { Floor } from "@/lib/tower";
 import { screenHeight, useScrollProgress } from "@/lib/useScrollProgress";
+import { onFirstSign, warmLayers } from "@/lib/whenIdle";
 import { RoomGrid } from "./RoomGrid";
 import { panelInsets, roomStill } from "./layout";
-import { Layer, RoomArticle, RoomLabels, RoomNav, solidBtn } from "./parts";
+import { solidBtn } from "./buttons";
+import { Layer } from "./Layer";
+import { RoomArticle, RoomLabels, RoomNav } from "./rooms";
 import { PLAN_STOP, ZONES_END, ZONE_COUNT, stageAt, zoneAt, zoneStop } from "./scene/timeline";
 import { useJourney } from "./useJourney";
 
@@ -19,14 +22,11 @@ const END = ZONES_END - 0.06;
 
 /**
  * Department page: the office of this floor, room by room.
- * Text is always in the page; the 3D model loads when the section comes close.
+ * Text is always in the page; the 3D model loads when the visitor is there and the section comes close.
  */
-export function DepartmentTour({ slug }: { slug: string }) {
-  const floor = floorIndex(slug);
-  const f = floors[floor];
+export function DepartmentTour({ floor: f, index, total }: { floor: Pick<Floor, "name" | "department">; index: number; total: number }) {
   const d = f.department;
   const ref = useRef<HTMLElement>(null);
-  const lenis = useLenis();
   const tier = useSyncExternalStore<Tier | null>(noop, getTier, () => null);
   const reduced = useSyncExternalStore(subscribeReducedMotion, prefersReducedMotion, () => false);
   const [near, setNear] = useState(false);
@@ -41,11 +41,8 @@ export function DepartmentTour({ slug }: { slug: string }) {
   const goTo = useCallback((to: number) => {
     const el = ref.current;
     if (!el) return;
-    const box = el.getBoundingClientRect();
-    const top = window.scrollY + box.top + ((to - START) / (END - START)) * (el.offsetHeight - screenHeight());
-    if (lenis) lenis.scrollTo(top, { duration: 1.4 });
-    else window.scrollTo({ top, behavior: "smooth" });
-  }, [lenis]);
+    scrollPageTo(window.scrollY + el.getBoundingClientRect().top + ((to - START) / (END - START)) * (el.offsetHeight - screenHeight()));
+  }, []);
 
   const toZone = useCallback((i: number) => {
     if (i < 0) goTo(PLAN_STOP - 0.1);
@@ -53,13 +50,14 @@ export function DepartmentTour({ slug }: { slug: string }) {
     else goTo(zoneStop(i));
   }, [goTo]);
 
+  const insets = useCallback((w: number, h: number) => panelInsets(w, h, ref.current), []);
   const { mountRef, engineRef, labelEls, status } = useJourney({
     enabled: near && !reduced,
     tier,
-    floors: floors.length,
-    floor,
+    floors: total,
+    floor: index,
     mode: "office",
-    insets: panelInsets,
+    insets,
     scroll,
     events: { onHoverZone: setHoverZone, onPickZone: toZone },
   });
@@ -67,10 +65,31 @@ export function DepartmentTour({ slug }: { slug: string }) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) setNear(true); }, { rootMargin: "60% 0px" });
+    let close = false, awake = window.scrollY > 40;
+    const go = () => {
+      if (close && awake) setNear(true);
+    };
+    const io = new IntersectionObserver(([e]) => {
+      close = e.isIntersecting;
+      go();
+    }, { rootMargin: "60% 0px" });
     io.observe(el);
-    return () => io.disconnect();
+    const off = onFirstSign(() => {
+      awake = true;
+      go();
+    });
+    return () => {
+      io.disconnect();
+      off();
+    };
   }, []);
+
+  // Panels that are still hidden are laid out ahead of time, once the scene runs
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || status !== "ready") return;
+    return warmLayers(el, () => engineRef.current?.refit());
+  }, [status, engineRef]);
 
   const flat = tier === "low" || reduced || status === "failed";
 
@@ -84,7 +103,7 @@ export function DepartmentTour({ slug }: { slug: string }) {
     if (bar.current) bar.current.style.scale = `${p.toFixed(4)} 1`;
   });
 
-  const hoverRoom = (i: number) => engineRef.current?.setHoverZone(i);
+  const hoverRoom = useCallback((i: number) => engineRef.current?.setHoverZone(i), [engineRef]);
 
   if (flat) {
     return (
@@ -97,10 +116,10 @@ export function DepartmentTour({ slug }: { slug: string }) {
 
   return (
     <section ref={ref} id="rooms" data-bare-header="" className="relative scroll-mt-[-88px]" style={{ height: `${((END - START) * 0.92 + 1) * 100}svh` }} aria-label={`Rooms of the ${f.name} floor`}>
-      <div className="sticky top-0 h-[100svh] overflow-hidden bg-stone">
+      <div className="tour-box sticky top-0 h-[100svh] overflow-hidden bg-stone">
         {/* Stills keep the place until the 3D office is ready */}
         {status !== "ready" && (
-          <div className="absolute inset-x-0 top-[120px] px-4 lg:inset-y-0 lg:left-[470px] lg:right-[84px] lg:top-0 lg:grid lg:place-items-center lg:px-0" aria-hidden>
+          <div className="absolute inset-x-0 top-[120px] px-4 desk:inset-y-0 desk:left-[470px] desk:right-[84px] desk:top-0 desk:grid desk:place-items-center desk:px-0" aria-hidden>
             <Image src={roomStill(plan ? "plan" : d.zones[zone].id)} alt="" width={1200} height={860} quality={75} sizes="(min-width: 1024px) 60vw, 100vw" className="mx-auto h-auto max-h-[70svh] w-full max-w-[900px] object-contain mix-blend-multiply" />
           </div>
         )}
@@ -108,17 +127,17 @@ export function DepartmentTour({ slug }: { slug: string }) {
         <div className="pointer-events-none absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-stone/95 via-stone/60 to-transparent" aria-hidden />
 
         <Layer on={plan && status === "ready"} className="pointer-events-none absolute inset-0 z-10">
-          <RoomLabels floor={f} active={hoverZone} setRef={(i) => (el) => { labelEls.current[i] = el; }} onHover={hoverRoom} onPick={toZone} />
+          <RoomLabels floor={f} active={hoverZone} els={labelEls} onHover={hoverRoom} onPick={toZone} />
         </Layer>
 
-        <Layer on={plan} className="pointer-events-none absolute inset-x-0 top-0 z-10 lg:inset-y-0">
-          <div className="container-x flex h-full flex-col pt-[92px] lg:justify-center lg:pt-[69px]">
-            <div className="pointer-events-auto lg:w-[26rem] short:w-[46%]">
-              <h2 className="wide text-[26px] leading-[1.1] lg:text-[34px]">Room by room</h2>
-              <p className="mt-3 max-w-[26rem] text-[16px] leading-relaxed text-smoke lg:text-[17px]">
+        <Layer on={plan} className="pointer-events-none absolute inset-x-0 top-0 z-10 desk:inset-y-0">
+          <div className="container-x flex h-full flex-col pt-[92px] desk:justify-center desk:pt-[69px]">
+            <div data-block="plan" className="pointer-events-auto desk:w-[26rem] short:w-[46%]">
+              <h2 className="wide text-[26px] leading-[1.1] desk:text-[34px]">Room by room</h2>
+              <p className="mt-3 max-w-[26rem] text-[16px] leading-relaxed text-smoke desk:text-[17px]">
                 A project crosses the floor from the first talk to the result. Scroll, or pick a room.
               </p>
-              <ol className="mt-6 hidden lg:block">
+              <ol className="mt-6 hidden desk:block">
                 {d.zones.map((z, i) => (
                   <li key={z.id}>
                     <button
@@ -141,7 +160,7 @@ export function DepartmentTour({ slug }: { slug: string }) {
             </div>
           </div>
         </Layer>
-        <Layer on={plan} className="pointer-events-none absolute inset-x-0 bottom-5 z-10 lg:hidden">
+        <Layer on={plan} className="pointer-events-none absolute inset-x-0 bottom-5 z-10 desk:hidden">
           <div className="container-x">
             <button type="button" onClick={() => toZone(0)} className={`${solidBtn} pointer-events-auto w-full short:w-[46%]`}>
               Walk through the rooms <Icon name="arrow-right" />
@@ -150,14 +169,14 @@ export function DepartmentTour({ slug }: { slug: string }) {
         </Layer>
 
         <Layer on={!plan} className="pointer-events-none absolute inset-0 z-10">
-          <div className="container-x flex h-full flex-col justify-end pb-3 lg:justify-center lg:pb-0 lg:pt-[69px]">
-            <div className="panel-light pointer-events-auto mx-auto flex max-h-[56svh] w-full max-w-[560px] flex-col rounded-2xl lg:mx-0 lg:max-h-[calc(100svh-120px)] lg:w-[27rem] short:mx-0 short:max-h-[calc(100svh-84px)] short:w-1/2">
-              <div className="overflow-y-auto p-5 pb-3 [scrollbar-width:thin] lg:p-7 lg:pb-4">
+          <div className="container-x flex h-full flex-col justify-end pb-3 desk:justify-center desk:pb-0 desk:pt-[69px]">
+            <div data-block="zone" className="panel-light pointer-events-auto mx-auto flex max-h-[66svh] w-full max-w-[560px] flex-col rounded-2xl desk:mx-0 desk:max-h-[calc(100svh-120px)] desk:w-[27rem] short:mx-0 short:max-h-[calc(100svh-84px)] short:w-1/2">
+              <div className="overflow-y-auto p-5 pb-3 [scrollbar-width:thin] low:p-4 low:pb-2 short:p-4 short:pb-2 flat:p-3 flat:pb-1.5 desk:p-7 desk:pb-4 squat:p-5 squat:pb-3">
                 <div className="grid">
                   {d.zones.map((z, i) => <RoomArticle key={z.id} floor={f} index={i} on={i === zone} />)}
                 </div>
               </div>
-              <div className="border-t border-hair px-5 py-3 lg:px-7 lg:py-4">
+              <div className="border-t border-hair px-5 py-3 low:px-4 low:py-2 short:px-4 short:py-1.5 flat:py-0.5 desk:px-7 desk:py-4 squat:px-5 squat:py-2.5">
                 <RoomNav index={zone} total={ZONE_COUNT} onGo={toZone} />
               </div>
             </div>
@@ -165,7 +184,7 @@ export function DepartmentTour({ slug }: { slug: string }) {
         </Layer>
 
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20">
-          <div className="container-x hidden justify-end pb-4 lg:flex">
+          <div className="container-x hidden justify-end pb-4 desk:flex">
             <button type="button" onClick={() => toZone(ZONE_COUNT)} className="pointer-events-auto inline-flex min-h-10 items-center gap-2 rounded-full bg-white/75 px-4 text-[14px] font-medium transition-colors hover:bg-white">
               Skip the rooms <Icon name="skip" />
             </button>

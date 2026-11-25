@@ -6,7 +6,7 @@ import { DRAWER, Exterior } from "./exterior";
 import { Office, PLAN, ZONES, zoneBox } from "./office";
 import { getQuality, ResolutionGovernor, type Quality } from "./quality";
 import { TL, ZONE_COUNT, liftAt, stageAt, zonePath } from "./timeline";
-import { applyPose, clonePose, damp, fitPose, mixPose, pose, smooth, smoother, type Insets, type Pose } from "./util";
+import { applyPose, clonePose, damp, fitPose, inSlices, mixPose, nextFrame, pose, smooth, smoother, type Insets, type Pose } from "./util";
 
 /** Office units to metres: the plan fills the deck of an open floor. */
 const K = 2.36;
@@ -26,6 +26,11 @@ export type JourneyEvents = {
   onPickZone?: (i: number) => void;
 };
 
+export type PanelInsets = { tower: Insets; plan: Insets; zone: Insets; done: Insets };
+
+type Shots = { hero: Pose; tower: Pose; planTop: Pose; plan: Pose; done: Pose; zone: Pose[] };
+const shotList = (s: Shots) => [s.hero, s.tower, s.planTop, s.plan, s.done, ...s.zone];
+
 export type JourneyOptions = {
   tier: Tier;
   floors: number;
@@ -33,14 +38,13 @@ export type JourneyOptions = {
   /** "full": campus to office. "office": only the office (department pages). */
   mode?: "full" | "office";
   /** Space taken by panels over the canvas, for the current size. */
-  insets?: (w: number, h: number) => { tower: Insets; plan: Insets; zone: Insets };
+  insets?: (w: number, h: number) => PanelInsets;
 };
 
 /** Runs the whole 3D story on one canvas. Scroll position goes in, frames come out. */
 export class Journey {
   /** Room label elements; the engine only moves them. */
   labelEls: (HTMLElement | null)[] = [];
-  private insets: { plan: Insets; zone: Insets; tower: Insets } = { plan: NONE, zone: NONE, tower: NONE };
 
   private renderer: THREE.WebGLRenderer;
   private q: Quality;
@@ -63,11 +67,15 @@ export class Journey {
   private sw = -1;
   private ready = false;
   private officeAsked = false;
-  private officeCold = false;
+  private warm: (() => void)[] = [];
+  private tall = false;
+  private odd = false;
+  private busy = 0;
   private disposed = false;
   private visible = true;
   private extShadow = true;
   private stillFrames = 0;
+  private shadowWait = 3;
   private ray = new THREE.Raycaster();
   private ndc = new THREE.Vector2(9, 9);
   private pointer = false;
@@ -85,20 +93,18 @@ export class Journey {
   private deck = new THREE.Vector3();
   private v = new THREE.Vector3();
 
-  // Poses, recomputed when the size or the panels change
-  private hero: Pose = pose({ x: 0, y: 11, z: 0, yaw: 20, pitch: 0, dist: 142, fov: 46, sy: 0.62 });
-  private tower: Pose = pose({ x: 0, y: 66, z: -36, yaw: 27, pitch: 7, dist: 150, fov: 32 });
-  private planTop: Pose = clonePose(this.tower);
-  private plan: Pose = clonePose(this.tower);
-  private zone: Pose[] = [];
-  private p = clonePose(this.hero);
-  private q1 = clonePose(this.hero);
-  private local = clonePose(this.hero);
-  private lastPose = clonePose(this.hero);
+  // Camera poses, recomputed when the size or the panels change
+  private shots: Shots;
+  private goal: Shots | null = null;
+  private p = pose({ x: 0, y: 0, z: 0, yaw: 0, pitch: 0, dist: 100 });
+  private q1 = clonePose(this.p);
+  private local = clonePose(this.p);
+  private lastPose = clonePose(this.p);
 
   constructor(private mount: HTMLElement, private o: JourneyOptions, private ev: JourneyEvents) {
     this.floor = this.floorShown = o.floor;
     this.q = getQuality(o.tier);
+    this.shots = this.frames(1, 1);
     this.renderer = new THREE.WebGLRenderer({ antialias: this.q.antialias, powerPreference: "high-performance", stencil: false });
     const r = this.renderer;
     r.outputColorSpace = THREE.SRGBColorSpace;
@@ -110,6 +116,8 @@ export class Journey {
     r.shadowMap.autoUpdate = false;
     r.autoClear = false;
     r.setClearColor(STONE, 1);
+    // Asking the driver for compile messages stalls the page; only useful while developing
+    r.debug.checkShaderErrors = process.env.NODE_ENV !== "production";
     const c = r.domElement;
     c.style.cssText = "width:100%;height:100%;display:block;touch-action:pan-y";
     c.setAttribute("aria-hidden", "true");
@@ -122,7 +130,7 @@ export class Journey {
     this.loader.setDRACOLoader(this.draco);
     this.gov = new ResolutionGovernor(r, this.q, () => this.layout());
     if (o.mode !== "office") this.ext = new Exterior(r, this.q, o.floors, o.floor, STONE);
-    this.office = new Office(r, this.q, o.floor);
+    this.office = new Office(this.q, o.floor);
 
     c.addEventListener("pointermove", this.onMove, { passive: true });
     c.addEventListener("pointerleave", this.onLeave);
@@ -159,6 +167,13 @@ export class Journey {
     this.stillFrames = 0;
   }
 
+  /** The panels have changed size: the picture glides into the free space that is left. */
+  refit() {
+    if (this.w < 2 || this.disposed) return;
+    this.goal = this.frames(this.w, this.h);
+    this.stillFrames = 0;
+  }
+
   dispose() {
     this.disposed = true;
     cancelAnimationFrame(this.raf);
@@ -182,16 +197,23 @@ export class Journey {
   /* ---------- loading ---------- */
 
   private async start() {
+    const alive = () => !this.disposed;
     try {
       if (this.ext) {
-        await this.ext.load(this.loader, (f) => this.ev.onProgress?.(f));
+        await this.ext.load(this.loader, this.tall, (f) => this.ev.onProgress?.(f));
         if (this.disposed) return;
+        // The phone may have been turned while loading
+        void this.ext.setView(this.tall);
         this.pose(this.u);
-        await this.renderer.compileAsync(this.ext.scene, this.camW);
+        await this.prepare(this.ext.scene, this.camW, alive);
         if (this.disposed) return;
-        this.ext.upgradePanorama(this.calm);
       } else {
         await this.loadOffice();
+        // Behind the still picture: the parts are drawn one by one, so the first real frame is light
+        await inSlices(this.office.warmSteps(), (step) => {
+          step();
+          this.drawWarm();
+        }, alive);
         if (this.disposed) return;
       }
       this.timer.update();
@@ -201,34 +223,92 @@ export class Journey {
     }
   }
 
+  /**
+   * Gets a scene ready for its first frame in small steps: textures, shaders, then buffers.
+   * All at once it would freeze a phone for half a second, in the middle of the first swipe.
+   */
+  private async prepare(scene: THREE.Scene, camera: THREE.Camera, alive: () => boolean) {
+    const r = this.renderer;
+    const meshes: THREE.Mesh[] = [];
+    const textures = new Set<THREE.Texture>();
+    const oneOf = new Map<THREE.Material, THREE.Mesh>();
+    scene.traverseVisible((o) => {
+      const m = o as THREE.Mesh;
+      if (!m.isMesh) return;
+      meshes.push(m);
+      const mat = m.material as THREE.Material;
+      if (!oneOf.has(mat)) oneOf.set(mat, m);
+      for (const v of Object.values(mat)) if (v instanceof THREE.Texture && v.image) textures.add(v);
+    });
+    await inSlices([...textures], (t) => r.initTexture(t), alive);
+    await inSlices([...oneOf.values()], (m) => r.compile(m, camera, scene), alive);
+    if (!alive()) return;
+    await r.compileAsync(scene, camera);
+    // First draws: a few objects per frame, into one pixel behind the poster
+    const shadow = this.extShadow;
+    for (const m of meshes) m.visible = false;
+    await inSlices(meshes, (m) => {
+      m.visible = true;
+      this.onePixel(() => r.render(scene, camera));
+      m.visible = false;
+    }, alive);
+    for (const m of meshes) m.visible = true;
+    if (!alive()) return;
+    await nextFrame();
+    if (shadow) {
+      r.shadowMap.needsUpdate = true;
+      this.onePixel(() => r.render(scene, camera));
+      this.extShadow = false;
+    }
+    await nextFrame();
+  }
+
+  private onePixel(draw: () => void) {
+    const r = this.renderer;
+    r.setScissorTest(true);
+    r.setScissor(0, 0, 1, 1);
+    r.setViewport(0, 0, 1, 1);
+    draw();
+    r.setScissorTest(false);
+    r.setViewport(0, 0, this.w, this.h);
+  }
+
   private async loadOffice() {
     if (this.officeAsked) return;
     this.officeAsked = true;
     await this.office.load(this.loader);
     if (this.disposed) return;
     this.pose(this.u);
+    const alive = () => !this.disposed;
+    const seen = new Set<THREE.Material>();
+    const list: THREE.Mesh[] = [];
+    this.office.scene.traverse((o) => {
+      const m = o as THREE.Mesh;
+      if (m.isMesh && !seen.has(m.material as THREE.Material)) {
+        seen.add(m.material as THREE.Material);
+        list.push(m);
+      }
+    });
+    await inSlices(list, (m) => this.renderer.compile(m, this.camL, this.office.scene), alive);
+    if (this.disposed) return;
     await this.renderer.compileAsync(this.office.scene, this.camL);
-    this.officeCold = true;
+    if (this.ext) this.warm = this.office.warmSteps();
     this.stillFrames = 0;
   }
 
-  /** Nobody scrolls or moves the mouse: one long frame will not be noticed. */
-  private calm = () => Math.abs(this.u - this.uS) < 0.001 && performance.now() - this.movedAt > 450;
+  /** One small step of getting the office ready. Steps run faster as the visitor comes closer to the floor. */
+  private warmStep(u: number) {
+    let n = u > 1.4 ? 2 : 1;
+    while (n-- && this.warm.length) {
+      this.warm.shift()!();
+      if (this.warm.length) this.drawWarm();
+    }
+  }
 
-  /** Draws the office once into a single pixel: textures, buffers and shadow shaders are then ready when the floor opens. */
-  private warmUp() {
-    this.officeCold = false;
+  private drawWarm() {
     const r = this.renderer;
-    this.office.update(0, { grow: 1, tint: 1, zone: 0, lift: 0.5, direct: true });
-    r.setScissorTest(true);
-    r.setScissor(0, 0, 1, 1);
-    r.setViewport(0, 0, 1, 1);
     r.shadowMap.needsUpdate = true;
-    r.render(this.office.scene, this.camL);
-    r.setScissorTest(false);
-    r.setViewport(0, 0, this.w, this.h);
-    this.office.update(0, { grow: 0, tint: 0, zone: -1, lift: 0, direct: true });
-    this.office.shadowDirty = true;
+    this.onePixel(() => r.render(this.office.scene, this.camL));
   }
 
   /* ---------- layout ---------- */
@@ -241,25 +321,52 @@ export class Journey {
     this.renderer.setSize(w, h, false);
     this.stillFrames = 0;
     const tall = w / h < 0.85;
-    if (this.o.insets) this.insets = this.o.insets(w, h);
+    if (tall !== this.tall) {
+      this.tall = tall;
+      if (this.ext?.loaded) void this.ext.setView(tall);
+    }
+    this.shots = this.frames(w, h);
+    this.goal = null;
+  }
 
-    // Campus: the vertical framing is the same for every width, so it matches the poster image
-    this.hero = tall
-      ? pose({ x: 0, y: 12, z: -8, yaw: 16, pitch: 0, dist: 270, fov: 48, sy: 0.68 })
-      : pose({ x: 1, y: 11, z: 0, yaw: 20, pitch: 0, dist: 142, fov: 46, sy: 0.62, sx: -0.02 });
+  private frames(w: number, h: number): Shots {
+    const tall = w / h < 0.85;
+    const free = this.o.insets?.(w, h) ?? { tower: NONE, plan: NONE, zone: NONE, done: NONE };
+    const plan = { yaw: tall ? 112 : 29, pitch: tall ? 56 : 48, fov: 26 };
+    return {
+      // Campus: the vertical framing is the same for every width, so it matches the poster image
+      hero: tall
+        ? pose({ x: 0, y: 12, z: -8, yaw: 16, pitch: 0, dist: 270, fov: 48, sy: 0.68 })
+        : pose({ x: 1, y: 11, z: 0, yaw: 20, pitch: 0, dist: 142, fov: 46, sy: 0.62, sx: -0.02 }),
+      tower: fitPose({ x0: -28, x1: 28, y0: 33, y1: 108, z0: -56, z1: -20 }, { yaw: tall ? 20 : 27, pitch: 6, fov: 30 }, w, h, free.tower, 1.06),
+      planTop: fitPose(PLAN, { yaw: tall ? 96 : 20, pitch: 66, fov: 26 }, w, h, free.plan, 1.2),
+      plan: fitPose(PLAN, plan, w, h, free.plan, 1.2),
+      done: fitPose(PLAN, plan, w, h, free.done, 1.2),
+      zone: ZONES.map((z, i) => fitPose(zoneBox(i), { yaw: z.yaw, pitch: tall ? z.pitch + 6 : z.pitch, fov: 26 }, w, h, free.zone, 0.97)),
+    };
+  }
 
-    const t = fitPose({ x0: -28, x1: 28, y0: 33, y1: 108, z0: -56, z1: -20 }, { yaw: tall ? 20 : 27, pitch: 6, fov: 30 }, w, h, this.insets.tower, 1.06);
-    this.tower = t;
-    this.planTop = fitPose(PLAN, { yaw: tall ? 96 : 20, pitch: 66, fov: 26 }, w, h, this.insets.plan, 1.2);
-    this.plan = fitPose(PLAN, { yaw: tall ? 112 : 29, pitch: tall ? 56 : 48, fov: 26 }, w, h, this.insets.plan, 1.2);
-    this.zone = ZONES.map((z, i) => fitPose(zoneBox(i), { yaw: z.yaw, pitch: tall ? z.pitch + 6 : z.pitch, fov: 26 }, w, h, this.insets.zone, 0.97));
+  private glide(dt: number) {
+    if (!this.goal) return;
+    const k = 1 - Math.exp(-7 * dt);
+    const to = shotList(this.goal);
+    let far = 0;
+    shotList(this.shots).forEach((a, i) => {
+      const b = to[i];
+      far = Math.max(far, Math.abs(a.x - b.x) + Math.abs(a.y - b.y) + Math.abs(a.z - b.z), Math.abs(a.dist - b.dist), Math.abs(a.sx - b.sx) + Math.abs(a.sy - b.sy));
+      mixPose(a, b, k, a);
+    });
+    if (far > 0.004) return;
+    this.shots = this.goal;
+    this.goal = null;
   }
 
   /** Writes both cameras for a scroll position. */
   private pose(u: number, dYaw = 0, dY = 0) {
     const full = !!this.ext;
     const a = smoother(TL.tower[0], TL.tower[1], u);
-    mixPose(this.hero, this.tower, a, this.p);
+    const shots = this.shots;
+    mixPose(shots.hero, shots.tower, a, this.p);
     this.p.yaw += dYaw;
     this.p.y += dY;
     const b = full ? smoother(TL.drawer[0], TL.drawer[1], u) : 1;
@@ -272,14 +379,14 @@ export class Journey {
     q.z = (this.p.z - this.deck.z) / K;
     q.dist = this.p.dist / K;
     const settle = smoother(TL.drawer[1] - 0.35, TL.plan[0] + 0.5, u);
-    mixPose(this.planTop, this.plan, full ? settle : 1, this.local);
+    mixPose(shots.planTop, shots.plan, full ? settle : 1, this.local);
     mixPose(q, this.local, b, this.local);
 
     const [from, to, t] = zonePath(u);
-    const at = (i: number) => (i < 0 || i >= ZONE_COUNT ? null : this.zone[i]);
+    const at = (i: number) => (i < 0 ? null : i >= ZONE_COUNT ? shots.done : shots.zone[i]);
     const f = at(from), g = at(to);
     if (f || g) {
-      mixPose(f ?? this.plan, g ?? this.plan, t, this.local);
+      mixPose(f ?? shots.plan, g ?? shots.plan, t, this.local);
     }
     const L = this.local;
     const aspect = this.w / this.h;
@@ -306,6 +413,12 @@ export class Journey {
   private loop = () => {
     this.raf = requestAnimationFrame(this.loop);
     if (!this.visible || this.disposed) return;
+    // Phones: the campus at rest only sways a little, half the frames are enough and keep the phone cool
+    const now = performance.now();
+    if (Math.abs(this.u - this.uS) > 0.001 || this.ext?.moving || now - this.movedAt < 100) this.busy = now;
+    const half = !this.q.high && this.ready && !!this.ext && now - this.busy > 700 && this.uS < TL.drawer[0];
+    this.odd = !this.odd;
+    if (half && this.odd) return;
     this.timer.update();
     const raw = this.timer.getDelta();
     const dt = Math.min(raw, 0.05);
@@ -318,6 +431,7 @@ export class Journey {
 
     if (full && !this.officeAsked && (u > 0.25 || time > 1)) void this.loadOffice().catch(() => {});
 
+    this.glide(dt);
     const outside = full ? 1 - smooth(TL.fade[0], TL.fade[1], u) : 0;
     // Small life of the camera on the campus: idle drift and parallax
     this.tiltS.x = damp(this.tiltS.x, this.tilt.x, 2, dt);
@@ -340,6 +454,12 @@ export class Journey {
     }
 
     const inOffice = this.office.loaded && (!full || u > TL.grow[0] - 0.1);
+    // Arrived before the office was warm: finish it now
+    if (inOffice && this.warm.length) {
+      this.warm.at(-1)!();
+      this.warm.length = 0;
+      this.office.scene.traverse((o) => { if ((o as THREE.Mesh).isMesh) o.visible = true; });
+    }
     if (inOffice) {
       const l = liftAt(u);
       const planStage = stageAt(u) === "plan";
@@ -357,7 +477,7 @@ export class Journey {
     }
 
     const r = this.renderer;
-    if (this.officeCold && full && !inOffice && (this.calm() || u > 1.4)) this.warmUp();
+    if (this.warm.length && full && !inOffice) this.warmStep(u);
     if (outside > 0.001 && this.ext) {
       this.ext.update(dt, time, {
         near: smoother(TL.tower[0], TL.tower[1], u),
@@ -375,7 +495,7 @@ export class Journey {
       r.render(this.ext.scene, this.camW);
       if (inOffice) this.drawOffice();
       this.stillFrames = 0;
-      this.gov.tick(raw);
+      if (!half) this.gov.tick(raw);
     } else if (inOffice) {
       // Nothing moves in the office between scrolls: skip identical frames
       if (this.samePose() && !this.office.shadowDirty && this.sw < 0) this.stillFrames++;
@@ -397,9 +517,11 @@ export class Journey {
   };
 
   private drawOffice() {
-    if (this.office.shadowDirty) {
+    // Phones: while things move, the shadow follows every third frame
+    if (this.office.shadowDirty && (this.q.high || ++this.shadowWait >= 3)) {
       this.renderer.shadowMap.needsUpdate = true;
       this.office.shadowDirty = false;
+      this.shadowWait = 0;
     }
     this.renderer.render(this.office.scene, this.camL);
   }

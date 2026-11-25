@@ -84,7 +84,7 @@ function canDecodeOffThread() {
   return !/^((?!chrome|android).)*safari/i.test(ua) || Number(/Version\/(\d+)/.exec(ua)?.[1] ?? 0) >= 17;
 }
 
-/** Loads a texture without blocking the page: a large panorama takes over 100 ms to decode. */
+/** Loads a texture without blocking the page: decoding happens in the background. */
 export async function loadTexture(url: string): Promise<THREE.Texture> {
   if (!canDecodeOffThread()) return new THREE.TextureLoader().loadAsync(url);
   const res = await fetch(url);
@@ -99,6 +99,96 @@ export async function loadTexture(url: string): Promise<THREE.Texture> {
     image.close();
   };
   return t;
+}
+
+/** Lets the browser draw a frame and answer the visitor between two pieces of work. */
+export const nextFrame = () => new Promise<void>((ok) => requestAnimationFrame(() => ok()));
+
+/** Runs a list of small jobs a few milliseconds at a time. Stops when `alive` says so. */
+export async function inSlices<T>(list: T[], job: (item: T) => void, alive: () => boolean, budget = 6) {
+  let t0 = performance.now();
+  for (const item of list) {
+    if (!alive()) return;
+    job(item);
+    if (performance.now() - t0 > budget) {
+      await nextFrame();
+      t0 = performance.now();
+    }
+  }
+}
+
+/**
+ * Reflections prepared in advance (the PMREM of three.js, saved as a picture): the six faces of a cube from left to
+ * right, from mirror to rough from top to bottom. Making them on a phone means a long pause at the start.
+ */
+export async function loadReflections(url: string, size: number) {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`${url}: ${res.status}`);
+  const sheet = await createImageBitmap(await res.blob());
+  const levels: ImageBitmap[][] = [];
+  for (let s = size, y = 0; s >= 4; y += s, s /= 2) {
+    levels.push(await Promise.all([0, 1, 2, 3, 4, 5].map((f) => createImageBitmap(sheet, f * s, y, s, s))));
+  }
+  sheet.close();
+  const t = new THREE.CubeTexture(levels[0]);
+  // three.js counts the levels after the first one, so there is a spare one at the end
+  t.mipmaps = levels.slice(1).map((image, i) => ({ image, width: size >> i })) as unknown as THREE.CubeTexture[];
+  t.isPMREMTexture = true;
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.generateMipmaps = false;
+  t.minFilter = THREE.LinearMipmapLinearFilter;
+  t.needsUpdate = true;
+  t.onUpdate = () => {
+    t.onUpdate = null;
+    levels.flat().forEach((b) => b.close());
+  };
+  return t;
+}
+
+/** Position of every vertex along one world axis (0 x, 1 y, 2 z). */
+export function along(g: THREE.BufferGeometry, m: THREE.Matrix4, axis: 0 | 1 | 2) {
+  const pos = g.getAttribute("position"), e = m.elements, n = pos.count;
+  const a = e[axis], b = e[axis + 4], c = e[axis + 8], d = e[axis + 12];
+  const out = new Float32Array(n);
+  const raw = pos.array;
+  // Plain numbers, as the Draco decoder leaves them: no need to go through the accessors
+  if (raw instanceof Float32Array && raw.length === n * 3) for (let k = 0, i = 0; k < n; k++, i += 3) out[k] = a * raw[i] + b * raw[i + 1] + c * raw[i + 2] + d;
+  else for (let k = 0; k < n; k++) out[k] = a * pos.getX(k) + b * pos.getY(k) + c * pos.getZ(k) + d;
+  return out;
+}
+
+/**
+ * Triangles that reach into a range, as a new geometry that shares the vertices of the old one.
+ * `beyond` has, for every vertex, one bit for each side of the range it lies beyond.
+ */
+export function pickTriangles(whole: THREE.BufferGeometry, beyond: Uint8Array) {
+  const n = beyond.length;
+  const src = whole.index ? (whole.index.array as Uint16Array | Uint32Array) : null;
+  const total = src ? src.length : n;
+  const out = n > 65535 ? new Uint32Array(total) : new Uint16Array(total);
+  let c = 0;
+  if (src) {
+    for (let k = 0; k < total; k += 3) {
+      const a = src[k], b = src[k + 1], d = src[k + 2];
+      if (beyond[a] & beyond[b] & beyond[d]) continue;
+      out[c++] = a;
+      out[c++] = b;
+      out[c++] = d;
+    }
+  } else {
+    for (let k = 0; k < total; k += 3) {
+      if (beyond[k] & beyond[k + 1] & beyond[k + 2]) continue;
+      out[c++] = k;
+      out[c++] = k + 1;
+      out[c++] = k + 2;
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  for (const [name, attr] of Object.entries(whole.attributes)) g.setAttribute(name, attr);
+  g.setIndex(new THREE.BufferAttribute(out.slice(0, c), 1));
+  g.boundingSphere = whole.boundingSphere;
+  g.boundingBox = whole.boundingBox;
+  return g;
 }
 
 export const asArray = (m: THREE.Material | THREE.Material[]) => (Array.isArray(m) ? m : [m]);

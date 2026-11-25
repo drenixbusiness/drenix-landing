@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useLenis } from "lenis/react";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/ui/Icon";
 import { nav, site } from "@/lib/site";
+import { lockPage } from "@/lib/smoothScroll";
+import { whenIdle } from "@/lib/whenIdle";
 
 /**
  * Header: logo and menu on a thin line.
@@ -14,8 +15,9 @@ import { nav, site } from "@/lib/site";
  */
 export function Header() {
   const pathname = usePathname();
-  const lenis = useLenis();
   const [open, setOpen] = useState(false);
+  // The phone menu is built in a quiet moment: not needed to open the page
+  const [menu, setMenu] = useState(false);
   const [light, setLight] = useState(false);
   const [solid, setSolid] = useState(false);
   const toggleRef = useRef<HTMLButtonElement>(null);
@@ -28,20 +30,25 @@ export function Header() {
   }
 
   useEffect(() => {
-    let raf = 0;
+    let raf = 0, last = 0;
     const check = () => {
       raf = 0;
       const els = document.elementsFromPoint(window.innerWidth / 2, 40);
       const host = els.map((e) => e.closest<HTMLElement>("[data-header]")).find(Boolean);
       setLight(host?.dataset.header === "light");
       // Once the page moves the header gets a background, so it never mixes with what passes under it.
-      // The 3D sections bring their own veil.
-      setSolid(window.scrollY > 24 && !els.some((e) => e.closest("[data-bare-header]")));
+      // The 3D sections bring their own veil, until they leave the screen.
+      const bare = els.map((e) => e.closest("[data-bare-header]")).find(Boolean);
+      setSolid(window.scrollY > 24 && !(bare && bare.getBoundingClientRect().bottom > document.documentElement.clientHeight - 8));
     };
     let late: ReturnType<typeof setTimeout> | undefined;
+    // Looking under the header costs a layout: a few times a second is enough, and once more at the end
     const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(check);
-      // The section attribute may change after scrolling, so check once more
+      const now = performance.now();
+      if (now - last > 100) {
+        last = now;
+        raf ||= requestAnimationFrame(check);
+      }
       clearTimeout(late);
       late = setTimeout(check, 120);
     };
@@ -62,8 +69,7 @@ export function Header() {
   useEffect(() => {
     if (!open) return;
     const toggle = toggleRef.current;
-    document.documentElement.style.overflow = "hidden";
-    lenis?.stop();
+    lockPage(true);
     menuRef.current?.querySelector<HTMLElement>("a")?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -84,17 +90,21 @@ export function Header() {
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.documentElement.style.overflow = "";
-      lenis?.start();
+      lockPage(false);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open, lenis]);
+  }, [open]);
+
+  useEffect(() => {
+    if (window.matchMedia("(min-width: 1024px)").matches) return;
+    return whenIdle(() => setMenu(true));
+  }, []);
 
   const white = open || light;
 
   return (
     <>
-      <header className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${white ? "on-dark text-white" : "text-graphite"} ${solid && !open ? (light ? "bg-graphite/85 backdrop-blur-md" : "bg-stone/95 shadow-[0_1px_0_rgb(20_20_20/0.1)] backdrop-blur-md") : ""}`}>
+      <header className={`fixed inset-x-0 top-0 z-50 transition-colors duration-300 ${white ? "on-dark text-white" : "text-graphite"} ${solid && !open ? (light ? "bg-graphite/95 lg:bg-graphite/85 lg:backdrop-blur-md" : "bg-stone/98 shadow-[0_1px_0_rgb(20_20_20/0.1)] lg:bg-stone/95 lg:backdrop-blur-md") : ""}`}>
         <div className="container-x">
           <div className="flex h-[68px] items-center justify-between gap-6">
             <Link href="/" className="flex min-h-11 items-center gap-2.5" aria-label="DRENIX, home">
@@ -145,7 +155,7 @@ export function Header() {
         </div>
       </header>
 
-      <div
+      {(menu || open) && <div
         id="mobile-menu"
         ref={menuRef}
         inert={!open}
@@ -172,7 +182,7 @@ export function Header() {
           <a href={site.phoneHref} className="flex min-h-11 items-center">{site.phone}</a>
           <a href={`mailto:${site.email}`} className="flex min-h-11 items-center">{site.email}</a>
         </div>
-      </div>
+      </div>}
     </>
   );
 }

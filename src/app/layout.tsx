@@ -38,11 +38,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* Without JavaScript nothing animates in, so nothing may stay hidden */}
         <noscript><style>{`.reveal,.hero-in{opacity:1!important;translate:none!important}.lines>span>span{translate:none!important}`}</style></noscript>
         <a href="#content" className="skip-link">Skip to content</a>
-        <SmoothScroll>
-          <Header />
-          <main id="content" tabIndex={-1} className="outline-none">{children}</main>
-          <Footer />
-        </SmoothScroll>
+        <Header />
+        <main id="content" tabIndex={-1} className="outline-none">{children}</main>
+        <Footer />
+        <SmoothScroll />
         <RevealObserver />
       </body>
     </html>

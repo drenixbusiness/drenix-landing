@@ -1,23 +1,38 @@
-import type { Insets } from "./scene/util";
+import type { PanelInsets } from "./scene/engine";
 
-/** Free space around the model for each kind of panel, in pixels. Must match the panels' CSS. */
-export function panelInsets(w: number, h: number): { tower: Insets; plan: Insets; zone: Insets } {
-  if (w >= 1024) {
+/**
+ * Free space around the model for each kind of panel, in pixels.
+ * Beside the model on wide screens; on phones above and below it, where the panels are measured (data-block).
+ */
+export function panelInsets(w: number, h: number, root: Element | null): PanelInsets {
+  if (w >= 1024 && w >= h) {
+    const edge = Math.max(0, (w - 1480) / 2);
+    const plan = { left: edge + 470, right: 84, top: 96, bottom: 40 };
     return {
-      tower: { left: 430, right: 372, top: 92, bottom: 30 },
-      plan: { left: 470, right: 84, top: 96, bottom: 40 },
-      zone: { left: 500, right: 84, top: 84, bottom: 48 },
+      tower: w < 1280 ? { left: 336, right: 354, top: 92, bottom: 30 } : { left: edge + 430, right: edge + 372, top: 92, bottom: 30 },
+      plan,
+      zone: { left: edge + 500, right: 84, top: 84, bottom: 48 },
+      done: plan,
     };
   }
   if (h < 540 && w > h) {
-    const left = w * 0.52;
-    const side = { left, right: 8, top: 60, bottom: 10 };
-    return { tower: side, plan: side, zone: side };
+    const side = { left: w * 0.52, right: 8, top: 60, bottom: 10 };
+    return { tower: side, plan: side, zone: side, done: side };
   }
+  // Only panels that have been laid out already (see warmLayers): measuring a hidden one would stall the page
+  const block = (name: string) => {
+    const el = root?.querySelector<HTMLElement>(`[data-block="${name}"]`);
+    return el?.closest("[data-warm]") ? el : null;
+  };
+  const height = (name: string, guess: number) => block(name)?.offsetHeight || guess;
+  const text = block("plan");
+  const fit = (top: number, bottom: number) => ({ left: 8, right: 8, top, bottom: Math.max(8, Math.min(bottom, h - top - 110)) });
   return {
-    tower: { left: 8, right: 8, top: 150, bottom: Math.min(380, h * 0.42) },
-    plan: { left: 8, right: 8, top: Math.min(300, h * 0.34), bottom: 120 },
-    zone: { left: 8, right: 8, top: 124, bottom: Math.min(470, h * 0.52) },
+    tower: fit(h < 740 ? 138 : 150, height("tower", h * 0.4) + 28),
+    // The numbers of the rooms stand above the plan
+    plan: fit((text?.offsetHeight ? text.offsetTop + text.offsetHeight : h * 0.3) + 34, 92),
+    zone: fit(100, height("zone", h * 0.5) + 22),
+    done: fit(122, height("done", h * 0.6) + 26),
   };
 }
 
