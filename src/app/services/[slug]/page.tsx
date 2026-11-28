@@ -65,10 +65,10 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
       </PageHero>
 
       {/* What the department is for, and who works in it */}
-      <section className="container-x grid gap-12 py-20 md:py-28 lg:grid-cols-12">
+      <section className="container-x grid gap-8 pb-6 pt-14 md:gap-12 md:py-20 lg:grid-cols-12 lg:py-28">
         <Reveal className="lg:col-span-6">
           <h2 className="wide text-[26px] leading-[1.12] md:text-[36px]">What {d.name} does</h2>
-          <p className="mt-6 text-[19px] leading-[1.55] md:text-[21px]">{s.description}</p>
+          <p className="mt-4 text-[18px] leading-[1.55] md:mt-6 md:text-[21px]">{s.description}</p>
         </Reveal>
         <div className="lg:col-span-5 lg:col-start-8">
           <h3 className="text-[18px] font-semibold">Who works on this floor</h3>
@@ -87,12 +87,12 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
 
       {/* Tasks */}
       <section className="cv bg-paper [--cv:1020px] md:[--cv:700px]">
-        <div className="container-x grid gap-12 py-20 md:py-28 lg:grid-cols-12 lg:items-start">
+        <div className="container-x grid gap-8 py-14 md:gap-12 md:py-20 lg:grid-cols-12 lg:items-start lg:py-28">
           <div className="lg:col-span-6">
             <h2 className="wide text-[26px] leading-[1.12] md:text-[36px]">What you can order</h2>
-            <dl className="mt-8 border-t border-hair">
+            <dl className="mt-6 border-t border-hair md:mt-8">
               {s.features.map((x) => (
-                <div key={x.title} className="border-b border-hair py-5">
+                <div key={x.title} className="border-b border-hair py-4 md:py-5">
                   <dt className="text-[19px] font-semibold">{x.title}</dt>
                   <dd className="mt-1.5 max-w-[34rem] text-[16px] leading-relaxed text-smoke">{x.text}</dd>
                 </div>
@@ -108,7 +108,7 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
       </section>
 
       {/* Start, result, measure, tools */}
-      <section className="cv container-x grid gap-x-12 gap-y-14 py-20 [--cv:1120px] md:grid-cols-2 md:py-28 md:[--cv:480px] xl:grid-cols-4">
+      <section className="cv container-x grid gap-x-12 gap-y-10 py-14 [--cv:1020px] md:grid-cols-2 md:gap-y-14 md:py-20 md:[--cv:480px] lg:py-28 xl:grid-cols-4">
         {([
           ["To start, we need", d.needs, "flag"],
           ["You take home", s.deliverables, "box"],
@@ -134,22 +134,23 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
       </section>
 
       {/* Neighbours */}
-      <section className="cv container-x pb-20 [--cv:1110px] md:pb-28 md:[--cv:545px]">
+      <section className="cv container-x pb-14 [--cv:420px] md:pb-20 md:[--cv:545px] lg:pb-28">
         <h2 className="wide text-[26px] leading-[1.12] md:text-[36px]">Works with</h2>
-        <ul className="mt-8 grid gap-5 md:grid-cols-3">
+        <ul className="mt-6 grid gap-3 md:mt-8 md:grid-cols-3 md:gap-5">
           {d.with.map((w) => {
             const n = floors[floorIndex(w.slug)];
             return (
               <li key={w.slug}>
-                <Link href={`/services/${w.slug}`} className="group block h-full overflow-hidden rounded-2xl bg-paper transition-shadow hover:shadow-[0_24px_60px_-30px_rgba(20,20,20,0.45)]">
-                  <div className="relative aspect-[16/10] overflow-hidden">
-                    <Image src={`/media/open-floor-${n.level}-card.webp`} alt="" fill quality={70} sizes="(min-width: 768px) 30vw, 100vw" className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]" />
+                <Link href={`/services/${w.slug}`} className="group flex h-full overflow-hidden rounded-2xl bg-paper transition-shadow hover:shadow-[0_24px_60px_-30px_rgba(20,20,20,0.45)] md:block">
+                  {/* Phones: a small picture beside the text. Wider screens: a card */}
+                  <div className="relative w-[34%] shrink-0 overflow-hidden md:aspect-[16/10] md:w-auto">
+                    <Image src={`/media/open-floor-${n.level}-card.webp`} alt="" fill quality={70} sizes="(min-width: 768px) 30vw, 34vw" className="object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.04]" />
                   </div>
-                  <div className="flex items-center gap-4 p-5">
-                    <Icon name={departmentIcon[w.slug]} className="size-6 text-ember-text" />
+                  <div className="flex min-h-24 flex-1 items-center gap-3 p-4 md:min-h-0 md:gap-4 md:p-5">
+                    <Icon name={departmentIcon[w.slug]} className="size-6 text-ember-text max-md:hidden" />
                     <span className="flex-1">
-                      <span className="block text-[18px] font-semibold">{n.name}</span>
-                      <span className="block text-[15px] text-smoke">For {w.why}</span>
+                      <span className="block text-[17px] font-semibold md:text-[18px]">{n.name}</span>
+                      <span className="block text-[14px] leading-snug text-smoke md:text-[15px]">For {w.why}</span>
                     </span>
                     <Icon name="arrow-right" className="size-5 transition-transform group-hover:translate-x-1" />
                   </div>
@@ -162,9 +163,9 @@ async function ServiceContent({ params }: { params: PageProps<"/services/[slug]"
 
       <Faq items={s.faq} title="Questions" />
 
-      <nav aria-label="Other floors" className="container-x grid gap-px py-12 sm:grid-cols-2">
+      <nav aria-label="Other floors" className="container-x grid gap-px py-6 sm:grid-cols-2 md:py-12">
         {([[up, "arrow-up", "Floor above"], [down, "arrow-down", "Floor below"]] as const).map(([x, icon, label], k) => (
-          <Link key={x.slug} href={`/services/${x.slug}`} className={`group flex items-center gap-5 py-6 ${k ? "sm:justify-end sm:text-right" : ""}`}>
+          <Link key={x.slug} href={`/services/${x.slug}`} className={`group flex items-center gap-5 py-3 md:py-6 ${k ? "sm:justify-end sm:text-right" : ""}`}>
             <span className={`grid size-12 place-items-center rounded-full border border-graphite/20 transition-colors group-hover:bg-graphite group-hover:text-white ${k ? "sm:order-2" : ""}`}><Icon name={icon} className="size-5" /></span>
             <span>
               <span className="block text-[15px] text-smoke">{label}</span>

@@ -72,7 +72,7 @@ export default function HomePanels({ stage, floor, zone, hoverZone, labelEls, on
       <Layer on={stage === "zone"} className="pointer-events-none absolute inset-0 z-10">
         <div className="container-x flex h-full flex-col justify-end pb-3 desk:justify-center desk:pb-0 desk:pt-[69px]">
           <div data-block="zone" className="panel-light pointer-events-auto mx-auto flex max-h-[66svh] w-full max-w-[560px] flex-col rounded-2xl text-graphite desk:mx-0 desk:max-h-[calc(100svh-120px)] desk:w-[27rem] short:mx-0 short:max-h-[calc(100svh-84px)] short:w-1/2">
-            <div className="overflow-y-auto p-5 pb-3 [scrollbar-width:thin] low:p-4 low:pb-2 short:p-4 short:pb-2 flat:p-3 flat:pb-1.5 desk:p-7 desk:pb-4 squat:p-5 squat:pb-3">
+            <div className="overflow-y-auto p-5 pb-3 low:p-4 low:pb-2 short:p-4 short:pb-2 flat:p-3 flat:pb-1.5 desk:p-7 desk:pb-4 squat:p-5 squat:pb-3">
               <h2 className="sr-only">Rooms of the {f.name} floor</h2>
               <div className="grid">
                 {f.department.zones.map((z, i) => <RoomArticle key={z.id} floor={f} index={i} on={i === zone} />)}

@@ -10,13 +10,13 @@ import { useContactForm } from "./useContactForm";
 
 const budgets = ["Under $1,000", "$1,000–5,000", "$5,000–15,000", "Over $15,000", "Not sure yet"];
 
-function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+function Chip({ active, onClick, children, wide = false }: { active: boolean; onClick: () => void; children: ReactNode; wide?: boolean }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-[15px] transition-colors ${active ? "border-graphite bg-graphite text-white" : "border-graphite/25 text-graphite hover:border-graphite"}`}
+      className={`inline-flex min-h-11 items-center gap-2 border px-4 text-[15px] transition-colors ${wide ? "rounded-xl py-2 text-left text-[14px] leading-tight sm:rounded-full sm:py-0 sm:text-[15px]" : "rounded-full"} ${active ? "border-graphite bg-graphite text-white" : "border-graphite/25 text-graphite hover:border-graphite"}`}
     >
       {active && <Icon name="check" className="size-4" />}
       {children}
@@ -47,7 +47,7 @@ export function ContactForm({ services, initial }: { services: { slug: string; t
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="space-y-9 rounded-2xl bg-paper p-6 md:p-10">
+    <form onSubmit={onSubmit} noValidate className="space-y-7 rounded-2xl bg-paper p-5 md:space-y-9 md:p-10">
       {summary && Object.keys(errors).length > 0 && <ErrorSummary ref={summaryRef} errors={errors} prefix="contact" />}
 
       <div className="grid gap-5 md:grid-cols-2">
@@ -59,9 +59,10 @@ export function ContactForm({ services, initial }: { services: { slug: string; t
 
       <fieldset>
         <legend className="mb-3 text-[15px] font-medium">Which services do you need?</legend>
-        <div className="flex flex-wrap gap-2">
+        {/* Phones: two columns, so ten long names do not make ten rows */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           {services.map((s) => (
-            <Chip key={s.slug} active={selected.includes(s.slug)} onClick={() => toggle(s.slug)}>{s.title}</Chip>
+            <Chip key={s.slug} wide active={selected.includes(s.slug)} onClick={() => toggle(s.slug)}>{s.title}</Chip>
           ))}
         </div>
       </fieldset>
@@ -85,7 +86,7 @@ export function ContactForm({ services, initial }: { services: { slug: string; t
         </p>
       )}
 
-      <div className="flex flex-col gap-5 border-t border-hair pt-7 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-t border-hair pt-6 sm:flex-row sm:items-center sm:justify-between md:gap-5 md:pt-7">
         <p className="max-w-xs text-[14px] text-smoke">By submitting, you agree to the processing of your personal data.</p>
         <button
           type="submit"

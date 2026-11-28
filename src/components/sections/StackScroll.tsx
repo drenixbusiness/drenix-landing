@@ -22,7 +22,7 @@ export function StackScroll({ total, children }: { total: number; children: Reac
   });
 
   return (
-    <div ref={ref} className="cv relative space-y-[30svh] pb-[10svh]" style={{ "--cv": `calc(${total * 130 - 20}svh - ${total * 8}rem)` } as CSSProperties}>
+    <div ref={ref} className="cv relative space-y-[30svh] pb-2 md:pb-[10svh]" style={{ "--cv": `calc(${total * 130 - 20}svh - ${total * 8}rem)` } as CSSProperties}>
       {children}
     </div>
   );

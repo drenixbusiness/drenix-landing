@@ -6,7 +6,7 @@ import { FloorsList } from "./FloorsList";
 export function FloorsTable() {
   return (
     <section className="cv bg-stone text-graphite [--cv:1400px]">
-      <div className="container-x py-20 md:py-28">
+      <div className="container-x py-14 md:py-20 lg:py-28">
         <SectionHead title="All|departments" text="Every floor is its own team. Start with one, or combine several in one project: you still talk to one manager." />
         <FloorsList floors={floorInfo} />
       </div>

@@ -30,13 +30,13 @@ export default function ContactPage(props: PageProps<"/contact">) {
 
   return (
     <>
-      <section className="container-x grid gap-12 pb-20 pt-28 md:pb-28 md:pt-36 lg:grid-cols-12">
+      <section className="container-x grid gap-10 pb-14 pt-24 md:pb-20 md:pt-32 lg:grid-cols-12 lg:gap-12 lg:pb-28 lg:pt-36">
         <div className="lg:col-span-5">
           <Lines as="h1" immediate delay={0.05} text="Contact" className="wide text-[clamp(34px,10vw,48px)] leading-[1.1] lg:text-[clamp(44px,4.4vw,64px)]" />
           <p className="hero-up mt-5 max-w-md text-[18px] leading-relaxed text-smoke md:text-[20px]">
             Fill in the form or reach us however suits you. We reply within 24 hours.
           </p>
-          <dl className="hero-in mt-10 border-t border-hair" style={{ animationDelay: "0.2s" }}>
+          <dl className="hero-in mt-8 border-t border-hair md:mt-10" style={{ animationDelay: "0.2s" }}>
             {rows.map((r) => (
               <div key={r.k} className="flex min-h-14 items-center justify-between gap-6 border-b border-hair py-2">
                 <dt className="text-[16px] text-smoke">{r.k}</dt>
@@ -54,7 +54,7 @@ export default function ContactPage(props: PageProps<"/contact">) {
           </Suspense>
         </div>
       </section>
-      <div className="relative h-[56svh] min-h-[320px] overflow-hidden">
+      <div className="relative h-[38svh] min-h-[240px] overflow-hidden md:h-[56svh] md:min-h-[320px]">
         <ArtPicture wide="/media/cta.webp" tall="/media/cta-tall.webp" alt="Main entrance of the DRENIX tower" />
       </div>
     </>

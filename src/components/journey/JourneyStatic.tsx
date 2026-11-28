@@ -41,7 +41,7 @@ export default function JourneyStatic({ floor, onFloor, poster }: { floor: numbe
         </div>
       </div>
 
-      <div id="departments" className="container-x scroll-mt-[-72px] py-20 md:py-28">
+      <div id="departments" className="container-x scroll-mt-[-72px] py-14 md:py-20 lg:py-28">
         <h2 className="wide text-[26px] leading-[1.12] text-graphite md:text-[38px]">Ten floors, ten departments</h2>
         <div className="mt-8 hidden md:block"><FloorChips floors={floorInfo} active={floor} onPick={onFloor} /></div>
         <div className="mt-6 md:hidden"><FloorSelect floors={floorInfo} active={floor} onPick={onFloor} /></div>
@@ -60,7 +60,7 @@ export default function JourneyStatic({ floor, onFloor, poster }: { floor: numbe
           </div>
         </div>
 
-        <div className="mt-12"><RoomGrid department={d} /></div>
+        <div className="mt-8 md:mt-12"><RoomGrid department={d} /></div>
       </div>
     </section>
   );

@@ -25,17 +25,17 @@ const card = "rounded-2xl border border-hair bg-paper";
 export function Portal() {
   return (
     <section className="cv bg-stone-2 text-graphite [--cv:1740px] md:[--cv:850px]">
-      <div className="container-x py-20 md:py-28">
+      <div className="container-x py-14 md:py-20 lg:py-28">
         <SectionHead title="Your project|at a glance" text="Every client gets a personal portal: tasks, deadlines, ad results and site status, all in real time. Below is an example." />
 
-        <Reveal y={40} className="mt-12">
-          <div className="grid gap-4 md:grid-cols-12">
-            <div className="rounded-2xl bg-graphite p-6 text-white md:col-span-8 md:p-9">
+        <Reveal y={40} className="mt-8 md:mt-12">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-12 md:gap-4">
+            <div className="col-span-2 rounded-2xl bg-graphite p-6 text-white md:col-span-8 md:p-9">
               <div className="flex items-start justify-between gap-6">
                 <div>
                   <p className="text-[16px] text-white/80">Sprint 6, day 9</p>
-                  <p className="mt-4 text-[26px] font-semibold leading-tight md:text-[34px]">Online store project<br />ahead of schedule</p>
-                  <p className="mt-3 max-w-md text-[17px] leading-relaxed text-white/80">Checkout and catalog are done. Next demo: Friday, 15:00.</p>
+                  <p className="mt-3 text-[23px] font-semibold leading-tight md:mt-4 md:text-[34px]">Online store project<br />ahead of schedule</p>
+                  <p className="mt-3 max-w-md text-[16px] leading-relaxed text-white/80 md:text-[17px]">Checkout and catalog are done. Next demo: Friday, 15:00.</p>
                 </div>
                 <div className="relative hidden size-36 shrink-0 sm:block">
                   <svg viewBox="0 0 100 100" className="size-full -rotate-90" aria-hidden>
@@ -50,11 +50,11 @@ export function Portal() {
               </div>
             </div>
 
-            <div className={`${card} p-6 md:col-span-4`}>
-              <p className="text-[20px] font-semibold">Friday, 14 November</p>
-              <ul className="mt-5 space-y-2.5">
+            <div className={`${card} col-span-2 p-5 md:col-span-4 md:p-6`}>
+              <p className="text-[19px] font-semibold md:text-[20px]">Friday, 14 November</p>
+              <ul className="mt-4 space-y-2 md:mt-5 md:space-y-2.5">
                 {[["10:00", "Design review"], ["15:00", "Sprint demo"], ["17:30", "Ad performance report"]].map(([t, e]) => (
-                  <li key={t} className="flex items-center gap-4 rounded-xl bg-stone px-4 py-3 text-[16px]">
+                  <li key={t} className="flex items-center gap-3 rounded-xl bg-stone px-4 py-2.5 text-[15px] md:gap-4 md:py-3 md:text-[16px]">
                     <Icon name="clock" className="size-5 text-ember-text" />
                     <span className="tabular text-smoke">{t}</span>
                     <span>{e}</span>
@@ -64,11 +64,11 @@ export function Portal() {
             </div>
 
             {stats.map((s) => (
-              <div key={s.k} className={`${card} p-5 md:col-span-6 xl:col-span-3`}>
-                <p className="text-[15px] text-smoke">{s.k}</p>
-                <p className="tabular mt-2 text-[30px] font-semibold leading-none tracking-tight">{s.v}</p>
-                <p className="mt-2 text-[15px] text-smoke">{s.d}</p>
-                <div className="mt-4"><Spark d={s.s} /></div>
+              <div key={s.k} className={`${card} p-4 md:col-span-6 md:p-5 xl:col-span-3`}>
+                <p className="text-[14px] leading-snug text-smoke md:text-[15px]">{s.k}</p>
+                <p className="tabular mt-2 text-[24px] font-semibold leading-none tracking-tight md:text-[30px]">{s.v}</p>
+                <p className="mt-2 text-[13px] leading-snug text-smoke md:text-[15px]">{s.d}</p>
+                <div className="mt-3 md:mt-4"><Spark d={s.s} /></div>
               </div>
             ))}
           </div>

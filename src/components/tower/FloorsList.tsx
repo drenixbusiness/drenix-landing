@@ -21,21 +21,21 @@ export function FloorsList({ floors }: { floors: FloorInfo[] }) {
 
   return (
     <>
-        <div className="mt-10 flex flex-wrap gap-2" role="group" aria-label="Filter departments">
+        <div className="mt-6 flex flex-wrap gap-2 md:mt-10" role="group" aria-label="Filter departments">
           {filters.map((f) => (
             <button
               key={f.id}
               type="button"
               aria-pressed={filter === f.id}
               onClick={() => setFilter(f.id)}
-              className={`min-h-11 rounded-full border px-5 text-[15px] font-medium transition-colors ${filter === f.id ? "border-graphite bg-graphite text-white" : "border-graphite/25 hover:border-graphite"}`}
+              className={`min-h-11 rounded-full border px-4 text-[14px] font-medium transition-colors sm:px-5 sm:text-[15px] ${filter === f.id ? "border-graphite bg-graphite text-white" : "border-graphite/25 hover:border-graphite"}`}
             >
-              {f.label}
+              {f.id === "all" ? <>All<span className="max-sm:hidden"> departments</span></> : f.label}
             </button>
           ))}
         </div>
 
-        <div className="mt-8 grid gap-10 lg:grid-cols-12">
+        <div className="mt-5 grid gap-10 md:mt-8 lg:grid-cols-12">
           <ul className="border-t border-graphite/60 lg:col-span-7">
             {floors.map((f, i) => {
               if (slugs && !slugs.includes(f.slug)) return null;
@@ -45,7 +45,7 @@ export function FloorsList({ floors }: { floors: FloorInfo[] }) {
                     href={`/services/${f.slug}`}
                     onMouseEnter={() => setCurrent(i)}
                     onFocus={() => setCurrent(i)}
-                    className={`group flex items-center gap-4 rounded-lg px-2 py-5 transition-colors md:gap-6 md:px-3 ${current === i ? "lg:bg-white/70" : ""}`}
+                    className={`group flex items-center gap-4 rounded-lg px-2 py-4 transition-colors md:gap-6 md:px-3 md:py-5 ${current === i ? "lg:bg-white/70" : ""}`}
                   >
                     <span className="wide tabular w-9 text-[18px]">{f.level}</span>
                     <Icon name={departmentIcon[f.slug]} className="size-6 text-ember-text max-sm:hidden" />

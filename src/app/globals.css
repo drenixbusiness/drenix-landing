@@ -121,8 +121,8 @@ label {
 
 /* The screen of a tour: the panels in it adapt to its size (see snug, low and tiny above) */
 .tour-box {
-  /* Where the column of the page starts */
-  --edge: max(0px, 50vw - 740px);
+  /* Where the column of the page starts. Percent, not vw: a visible scrollbar is not part of the page */
+  --edge: max(0px, 50% - 740px);
   container: tour / size;
 }
 
@@ -298,22 +298,23 @@ details > summary::-webkit-details-marker {
   }
 }
 
-/* Entrance on scroll. RevealObserver sets data-in once the element is on screen. */
+/* Entrance on scroll. RevealObserver sets data-in a little before the element comes on screen, so what the
+   visitor scrolls to is already appearing and never stands empty. */
 .reveal {
   opacity: 0;
-  translate: 0 var(--y, 24px);
+  translate: 0 var(--y, 18px);
 }
 .reveal[data-in] {
   opacity: 1;
   translate: none;
-  transition: opacity 0.9s var(--ease-out-expo) var(--d, 0s), translate 0.9s var(--ease-out-expo) var(--d, 0s);
+  transition: opacity 0.7s var(--ease-out-expo) var(--d, 0s), translate 0.7s var(--ease-out-expo) var(--d, 0s);
 }
 .lines > span > span {
   translate: 0 105%;
 }
 .lines[data-in] > span > span {
   translate: none;
-  transition: translate 1s var(--ease-out-expo) calc(var(--d, 0s) + var(--i, 0) * 0.08s);
+  transition: translate 0.8s var(--ease-out-expo) calc(var(--d, 0s) + var(--i, 0) * 0.06s);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -328,7 +329,8 @@ details > summary::-webkit-details-marker {
   }
 }
 
-/* Scrollbar yashirilgan — sahifa baribir aylanadi (Lenis + g‘ildirak/sensor) */
+/* Scrollbars. Touch screens: hidden, the page scrolls under the finger. With a mouse or trackpad: a slim bar in
+   the colours of the site, on the page and in every panel that scrolls. */
 html,
 body {
   scrollbar-width: none;
@@ -339,4 +341,56 @@ body::-webkit-scrollbar {
   display: none;
   width: 0;
   height: 0;
+}
+@media (pointer: fine) {
+  html {
+    /* "auto" hands the look over to the rules below; the space stays the same on every page */
+    scrollbar-width: auto;
+    scrollbar-gutter: stable;
+  }
+  /* Chrome, Edge, Safari: a rounded bar without arrow buttons */
+  html::-webkit-scrollbar {
+    display: block;
+    width: 10px;
+  }
+  html::-webkit-scrollbar-track {
+    background: var(--color-stone);
+  }
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  *::-webkit-scrollbar-track,
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-button {
+    display: none;
+  }
+  *::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background: rgb(20 20 20 / 0.36) padding-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ember-deep) padding-box;
+  }
+  .on-dark ::-webkit-scrollbar-thumb {
+    background: rgb(255 255 255 / 0.35) padding-box;
+  }
+  /* Firefox */
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: rgb(20 20 20 / 0.42) var(--color-stone);
+    }
+    body * {
+      scrollbar-width: thin;
+      scrollbar-color: rgb(20 20 20 / 0.32) transparent;
+    }
+    .on-dark,
+    .on-dark * {
+      scrollbar-color: rgb(255 255 255 / 0.35) transparent;
+    }
+  }
 }

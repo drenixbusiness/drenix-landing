@@ -21,9 +21,9 @@ export default function Home() {
       <ProcessLine />
 
       <section className="bg-stone text-graphite" data-header="dark">
-        <div className="container-x pt-24 md:pt-32">
+        <div className="container-x pt-14 md:pt-24 lg:pt-32">
           <SectionHead title="Our|work" action={<TextLink href="/projects">All projects</TextLink>} />
-          <div className="mt-14 pb-16">
+          <div className="mt-8 pb-8 md:mt-14 md:pb-16">
             <CaseStack total={cases.length}>
               {cases.map((c, i) => <CaseSlide key={c.slug} c={c} index={i} />)}
             </CaseStack>

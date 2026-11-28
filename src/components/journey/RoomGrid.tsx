@@ -6,7 +6,7 @@ import { roomStill } from "./layout";
 /** All rooms of a department as a plain list: the version without 3D and without scroll effects. */
 export function RoomGrid({ department }: { department: Department }) {
   return (
-    <ol className="grid gap-x-8 gap-y-12 md:grid-cols-2 xl:grid-cols-3">
+    <ol className="grid gap-x-8 gap-y-8 md:gap-y-12 md:grid-cols-2 xl:grid-cols-3">
       {department.zones.map((z, i) => (
         <li key={z.id}>
           <Image src={roomStill(z.id)} alt="" width={1200} height={860} quality={75} sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 100vw" className="h-auto w-full rounded-2xl" />

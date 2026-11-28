@@ -2,7 +2,10 @@
 
 import { useEffect } from "react";
 
-/** Marks .reveal and .lines elements once they enter the screen. One observer for the whole site. */
+/**
+ * Marks .reveal and .lines elements when they are about to enter the screen. One observer for the whole site.
+ * Starting a little early means the visitor sees them finish appearing, not an empty space.
+ */
 export function RevealObserver() {
   useEffect(() => {
     const io = new IntersectionObserver(
@@ -13,7 +16,7 @@ export function RevealObserver() {
           io.unobserve(e.target);
         }
       },
-      { rootMargin: "-8% 0px" },
+      { rootMargin: "0px 0px 12% 0px" },
     );
     const scan = () => document.querySelectorAll(".reveal:not([data-in]), .lines:not([data-in])").forEach((el) => io.observe(el));
     scan();

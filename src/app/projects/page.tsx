@@ -21,8 +21,8 @@ export default function CasesPage() {
       >
         <Button href="/contact">Ask for a case</Button>
       </PageHero>
-      <section className="container-x py-20 md:py-28">
-        <div className="grid gap-x-8 gap-y-16 md:grid-cols-2">
+      <section className="container-x py-14 md:py-20 lg:py-28">
+        <div className="grid gap-x-8 gap-y-10 md:grid-cols-2 md:gap-y-16">
           {cases.map((c, i) => (
             <CaseCard key={c.slug} c={c} index={i} />
           ))}

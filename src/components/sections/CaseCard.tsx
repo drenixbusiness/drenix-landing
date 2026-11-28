@@ -19,8 +19,8 @@ export function CaseCard({ c, index = 0 }: { c: CaseStudy; index?: number }) {
             <Mockup kind={c.mock} />
           </div>
         </div>
-        <h2 className="mt-6 text-[21px] font-semibold leading-snug md:text-[25px]">{c.title}</h2>
-        <p className="mt-2 text-[17px] text-smoke">{c.client}: {c.services.join(", ")}</p>
+        <h2 className="mt-5 text-[20px] font-semibold leading-snug md:mt-6 md:text-[25px]">{c.title}</h2>
+        <p className="mt-1.5 text-[16px] text-smoke md:mt-2 md:text-[17px]">{c.client}: {c.services.join(", ")}</p>
       </article>
     </Reveal>
   );

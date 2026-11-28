@@ -31,24 +31,24 @@ export default function ServicesPage() {
         ]}
       />
 
-      <section className="container-x py-16 md:py-24">
+      <section className="container-x pb-6 pt-8 md:py-16 lg:py-24">
         <ul>
           {services.map((s, i) => {
             const f = floors[i];
             return (
-              <li key={s.slug} className="cv border-t border-hair [--cv:640px] last:border-b md:[--cv:545px]">
+              <li key={s.slug} className="cv border-t border-hair [--cv:600px] last:border-b md:[--cv:545px]">
                 <Reveal delay={0.02}>
-                  <Link href={`/services/${s.slug}`} className="group grid gap-8 py-10 md:grid-cols-12 md:items-center md:py-14">
+                  <Link href={`/services/${s.slug}`} className="group grid gap-6 py-8 md:grid-cols-12 md:items-center md:gap-8 md:py-14">
                     <div className="md:col-span-6 lg:col-span-5">
                       <p className="flex items-center gap-4">
                         <span className="wide tabular text-[30px] leading-none">{f.level}</span>
                         <span className="grid size-11 place-items-center rounded-full bg-ember/15 text-ember-text"><Icon name={departmentIcon[s.slug]} className="size-5" /></span>
                         <span className="text-[17px] font-semibold">{f.name}</span>
                       </p>
-                      <h2 className="wide mt-5 text-[24px] leading-[1.15] transition-colors group-hover:text-ember-text lg:text-[28px]">{s.title}</h2>
-                      <p className="mt-4 max-w-md text-[18px] leading-relaxed text-smoke">{s.summary}</p>
-                      <p className="mt-5 flex items-center gap-2 text-[16px] text-smoke"><Icon name="clock" className="size-5" />{s.timeline}</p>
-                      <span className="mt-5 inline-flex min-h-11 items-center gap-3 text-[16px] font-medium">
+                      <h2 className="wide mt-4 text-[24px] leading-[1.15] md:mt-5 transition-colors group-hover:text-ember-text lg:text-[28px]">{s.title}</h2>
+                      <p className="mt-3 max-w-md text-[17px] leading-relaxed text-smoke md:mt-4 md:text-[18px]">{s.summary}</p>
+                      <p className="mt-4 flex items-center gap-2 text-[16px] text-smoke md:mt-5"><Icon name="clock" className="size-5" />{s.timeline}</p>
+                      <span className="mt-2 inline-flex min-h-11 items-center gap-3 text-[16px] font-medium md:mt-5">
                         <span className="underline decoration-graphite/30 underline-offset-[6px] group-hover:decoration-graphite">See how we work</span>
                         <Icon name="arrow-right" className="size-4 transition-transform group-hover:translate-x-1" />
                       </span>

@@ -107,9 +107,9 @@ export function DepartmentTour({ floor: f, index, total }: { floor: Pick<Floor, 
 
   if (flat) {
     return (
-      <section ref={ref} id="rooms" className="container-x scroll-mt-[-72px] py-20 md:py-28" aria-label={`Rooms of the ${f.name} floor`}>
+      <section ref={ref} id="rooms" className="container-x scroll-mt-[-72px] py-14 md:py-20 lg:py-28" aria-label={`Rooms of the ${f.name} floor`}>
         <h2 className="wide text-[26px] leading-[1.12] md:text-[38px]">Room by room</h2>
-        <div className="mt-12"><RoomGrid department={d} /></div>
+        <div className="mt-8 md:mt-12"><RoomGrid department={d} /></div>
       </section>
     );
   }
@@ -171,7 +171,7 @@ export function DepartmentTour({ floor: f, index, total }: { floor: Pick<Floor, 
         <Layer on={!plan} className="pointer-events-none absolute inset-0 z-10">
           <div className="container-x flex h-full flex-col justify-end pb-3 desk:justify-center desk:pb-0 desk:pt-[69px]">
             <div data-block="zone" className="panel-light pointer-events-auto mx-auto flex max-h-[66svh] w-full max-w-[560px] flex-col rounded-2xl desk:mx-0 desk:max-h-[calc(100svh-120px)] desk:w-[27rem] short:mx-0 short:max-h-[calc(100svh-84px)] short:w-1/2">
-              <div className="overflow-y-auto p-5 pb-3 [scrollbar-width:thin] low:p-4 low:pb-2 short:p-4 short:pb-2 flat:p-3 flat:pb-1.5 desk:p-7 desk:pb-4 squat:p-5 squat:pb-3">
+              <div className="overflow-y-auto p-5 pb-3 low:p-4 low:pb-2 short:p-4 short:pb-2 flat:p-3 flat:pb-1.5 desk:p-7 desk:pb-4 squat:p-5 squat:pb-3">
                 <div className="grid">
                   {d.zones.map((z, i) => <RoomArticle key={z.id} floor={f} index={i} on={i === zone} />)}
                 </div>

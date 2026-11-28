@@ -59,6 +59,10 @@ Rasm almashtirilsa, unga yangi nom bering: optimallashtirilgan rasmlar 30 kun ke
 
 Sayohat panellari ekran o‘lchamiga o‘zi moslashadi (`src/app/globals.css` boshidagi variantlar): `desk` / `roomy` — panel model yonida, `stack` — panel model ustida va ostida, `squat` — past noutbuk ekrani, `snug` / `low` / `tiny` — tik ushlangan telefon (brauzer panellari orasidagi balandlik bo‘yicha), `short` / `flat` — yotiq ushlangan telefon.
 
+Bo‘limlar orasidagi joy hamma sahifada bir xil: telefonda `py-14`, planshetda `md:py-20`, kompyuterda `lg:py-28`; sarlavhadan keyingi blok `mt-8 md:mt-12`. Yangi bo‘lim qo‘shilganda ham shu qiymatlarni ishlating, telefonda katta bo‘sh joy qolmaydi.
+
+Sichqoncha yoki trackpad bilan sahifa o‘ng tomonida sayt ranglaridagi ingichka scroll turadi (`globals.css`, "Scrollbars"); telefon va planshetda u yashirin.
+
 ## Tezlik
 
 - CSS sahifa ichida keladi (`experimental.inlineCss`): birinchi chizish ikkinchi so‘rovni kutmaydi.
